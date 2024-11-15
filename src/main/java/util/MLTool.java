@@ -48,7 +48,7 @@ import ij.process.ColorProcessor;
 import net.imglib2.type.numeric.ARGBType;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Funke lab>Annotator ...")
-public class MLTool implements PlugIn
+public class MLTool implements Command, PlugIn
 {
 	// Done: default Mask: 0.5, red
 	// Done: on start ask for root directory
@@ -501,6 +501,9 @@ public class MLTool implements PlugIn
 		setup( defaultDirectory = gd.getNextString() );
 		SwingUtilities.invokeLater(() -> this.showDialog( 100, 3.0, 50, Color.orange, defaultLoadExisting = gd.getNextBoolean() ) );
 	}
+
+	@Override
+	public void run() { run( null ); }
 
 	public static void main( String[] args )
 	{
