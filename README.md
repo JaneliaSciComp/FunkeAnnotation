@@ -1,3 +1,5 @@
+![example workflow](https://github.com/JaneliaSciComp/FunkeAnnotation/actions/workflows/maven.yml/badge.svg)
+
 Small tool for annotating images.
 
 Installation:
