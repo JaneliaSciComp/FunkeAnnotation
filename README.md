@@ -1,7 +1,7 @@
 Small tool for annotating images.
 
 Installation:
-- download from releases or build the tool using Maven `mvn clean package`
+- download from [releases](https://github.com/JaneliaSciComp/FunkeAnnotation/releases) or build the tool using Maven `mvn clean package`
 - copy the JAR file to the Fiji plugins directory
 - the plugin will show up under Fiji > Plugins > Funke lab > Annotator ...
 
