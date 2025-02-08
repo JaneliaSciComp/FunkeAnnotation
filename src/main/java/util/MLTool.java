@@ -283,7 +283,8 @@ public class MLTool implements Command, PlugIn
 			final double defaultMagnification,
 			final int defaultMask,
 			final Color defaultColor,
-			final boolean loadExisting )
+			final boolean loadExisting,
+			final String json )
 	{
 		setColor( defaultColor );
 
@@ -484,6 +485,7 @@ public class MLTool implements Command, PlugIn
 	}
 
 	public static String defaultDirectory = "";
+	public static String defaultJSON = "";
 	public static boolean defaultLoadExisting = true;
 
 	@Override
@@ -492,14 +494,16 @@ public class MLTool implements Command, PlugIn
 		GenericDialogPlus gd = new GenericDialogPlus( "Select base directory" );
 
 		gd.addDirectoryField("Directory", defaultDirectory, 80 );
-		gd.addCheckbox( "Load existing notes", defaultLoadExisting);
+		gd.addFileField( "Annotation JSON", defaultJSON, 80 );
+		gd.addCheckbox( "Load existing notes (only relevant if no JSON is specified)", defaultLoadExisting);
 
 		gd.showDialog();
 		if ( gd.wasCanceled() )
 			return;
 
 		setup( defaultDirectory = gd.getNextString() );
-		SwingUtilities.invokeLater(() -> this.showDialog( 100, 3.0, 50, Color.orange, defaultLoadExisting = gd.getNextBoolean() ) );
+		SwingUtilities.invokeLater(() ->
+			this.showDialog( 100, 3.0, 50, Color.orange, defaultLoadExisting = gd.getNextBoolean(), defaultJSON = gd.getNextString() ) );
 	}
 
 	@Override
@@ -509,6 +513,7 @@ public class MLTool implements Command, PlugIn
 	{
 		new ImageJ();
 		defaultDirectory = "/Users/preibischs/Documents/Janelia/Projects/Funke/phase1/";
+		defaultJSON = "/Users/preibischs/Documents/Janelia/Projects/Funke/phase2_example.json";
 
 		new MLTool().run( null );
 
