@@ -404,19 +404,26 @@ public class MLTool implements Command, PlugIn
 		});
 		dialog.add( quit, c );
 
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 3;
-		c.gridwidth = 4;
-		c.gridheight = 2;
-		c.ipady = 200;
-		c.ipadx = 300;
-		textfield = new JTextArea();
-		dialog.add( new JScrollPane(textfield), c );
-
-		// try loading an existing notes file
-		if ( loadExisting )
-			load();
+		if ( json == null )
+		{
+			c.fill = GridBagConstraints.HORIZONTAL;
+			c.gridx = 0;
+			c.gridy = 3;
+			c.gridwidth = 4;
+			c.gridheight = 2;
+			c.ipady = 200;
+			c.ipadx = 300;
+			textfield = new JTextArea();
+			dialog.add( new JScrollPane(textfield), c );
+	
+			// try loading an existing notes file
+			if ( loadExisting )
+				load();
+		}
+		else
+		{
+			// TODO: new elemnts
+		}
 
 		// show dialog
 		dialog.pack();
