@@ -6,6 +6,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -13,6 +14,7 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.stream.IntStream;
@@ -27,8 +29,18 @@ import javax.swing.JSlider;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
+import org.janelia.saalfeldlab.n5.GsonUtils;
+import org.janelia.saalfeldlab.n5.N5FSReader;
 import org.scijava.command.Command;
 import org.scijava.plugin.Plugin;
+
+import com.google.api.client.json.JsonParser;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonReader;
 
 import fiji.tool.SliceListener;
 import fiji.tool.SliceObserver;
@@ -220,6 +232,34 @@ public class MLTool implements Command, PlugIn
 
 			target.set( i, ARGBType.rgba(v - amountR*tmp, v- amountG*tmp, v- amountB*tmp, 255.0f) );
 		}
+	}
+
+	public boolean loadJSON( final String json )
+	{
+		try 
+		{
+			final Gson gson = new Gson();
+			final JsonReader reader = new JsonReader(new FileReader( json ));
+			final JsonElement element = gson.fromJson(reader, JsonElement.class );
+			final Map<String, Class<?>> sc = GsonUtils.listAttributes( element );
+			final JsonObject jo = element.getAsJsonObject();
+
+			sc.forEach( (s,c) -> 
+			{
+				System.out.println( s + ": " + c );
+
+				JsonObject elem2 = jo.getAsJsonObject( s );
+				elem2.entrySet().forEach( e -> System.out.println(e.getKey() + ": " + e.getValue().getAsString()));//forEach( (s1,e1) -> System.out.println( s1 ) );
+				System.out.println();
+			} );
+			
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+			return false;
+		}
+
+		return false;
 	}
 
 	public boolean load()
@@ -422,7 +462,18 @@ public class MLTool implements Command, PlugIn
 		}
 		else
 		{
+			if ( !loadJSON( json ) )
+			{
+				IJ.log( "failed to load json: " + json );
+				return;
+			}
+
+			//r.listAttributes(json)
+			//JsonParser gson = new GsonFactory().createJsonParser(""+json);
+			//new Gson().
+			//new Gson().
 			// TODO: new elemnts
+			
 		}
 
 		// show dialog
