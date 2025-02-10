@@ -11,6 +11,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -97,6 +98,11 @@ public class MLTool implements Command, PlugIn
 	SliceObserver sliceObserver;
 	String dir;
 	ByteProcessor[] imgsA, imgsB, imgsM;
+
+	public static class Feature
+	{
+		String minusOne, zero, plusOne;
+	}
 
 	public void setup( final String dir )
 	{
@@ -234,32 +240,48 @@ public class MLTool implements Command, PlugIn
 		}
 	}
 
-	public boolean loadJSON( final String json )
+	public List< Feature > loadJSON( final String json )
 	{
 		try 
 		{
 			final Gson gson = new Gson();
 			final JsonReader reader = new JsonReader(new FileReader( json ));
 			final JsonElement element = gson.fromJson(reader, JsonElement.class );
+
 			final Map<String, Class<?>> sc = GsonUtils.listAttributes( element );
 			final JsonObject jo = element.getAsJsonObject();
 
+			final List< Feature > featureList = new ArrayList<>();
+
 			sc.forEach( (s,c) -> 
 			{
-				System.out.println( s + ": " + c );
+				IJ.log( "\nFeature: " + s + " [class=" + c + "]");
 
-				JsonObject elem2 = jo.getAsJsonObject( s );
-				elem2.entrySet().forEach( e -> System.out.println(e.getKey() + ": " + e.getValue().getAsString()));//forEach( (s1,e1) -> System.out.println( s1 ) );
-				System.out.println();
+				final JsonObject featureElement = jo.getAsJsonObject( s );
+
+				final Feature feature = new Feature();
+
+				feature.minusOne = featureElement.get( "-1" ).getAsString();
+				feature.zero = featureElement.get( "0" ).getAsString();
+				feature.plusOne = featureElement.get( "1" ).getAsString();
+
+				featureList.add( feature );
+
+				IJ.log( "-1: " + feature.minusOne );
+				IJ.log( "0: " + feature.zero );
+				IJ.log( "+1 :" + feature.plusOne );
+
+				//featureElement.entrySet().forEach( e -> System.out.println(e.getKey() + ": " + e.getValue().getAsString()));//forEach( (s1,e1) -> System.out.println( s1 ) );
+				//System.out.println();
 			} );
-			
+
+			return featureList;
 		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
-			return false;
+			return null;
 		}
 
-		return false;
 	}
 
 	public boolean load()
@@ -462,12 +484,15 @@ public class MLTool implements Command, PlugIn
 		}
 		else
 		{
-			if ( !loadJSON( json ) )
+			final List<Feature> featureList = loadJSON( json );
+
+			if ( featureList == null )
 			{
 				IJ.log( "failed to load json: " + json );
 				return;
 			}
 
+			IJ.log( "Loaded " + featureList.size() + " features from json ... ");
 			//r.listAttributes(json)
 			//JsonParser gson = new GsonFactory().createJsonParser(""+json);
 			//new Gson().
