@@ -368,14 +368,14 @@ public class MLTool implements Command, PlugIn
 		// GRID Y=0
 		c.gridx = 0;
 		c.gridy = 0;
-		c.gridwidth = 1;
+		c.gridwidth = 1*2;
 		text1 = new JButton( "Image 0" );
 		text1.setBorderPainted( false );
 		dialog.add( text1, c );
 
-		c.gridx = 1;
+		c.gridx = 1*2;
 		c.gridy = 0;
-		c.gridwidth = 2;
+		c.gridwidth = 2*2;
 		sliderImg = new JSlider( 0, imgsA.length - 1 );
 		sliderImg.setValue( 0 );
 		sliderImg.addChangeListener( e -> {
@@ -386,9 +386,9 @@ public class MLTool implements Command, PlugIn
 		});
 		dialog.add( sliderImg, c );
 
-		c.gridx = 3;
+		c.gridx = 3*2;
 		c.gridy = 0;
-		c.gridwidth = 1;
+		c.gridwidth = 1*2;
 		text2 = new JButton( "Image " + ( imgsA.length - 1 ) );
 		text2.setBorderPainted( false );
 		dialog.add( text2, c );
@@ -396,7 +396,7 @@ public class MLTool implements Command, PlugIn
 		// GRID Y=1
 		c.gridx = 0;
 		c.gridy = 1;
-		c.gridwidth = 1;
+		c.gridwidth = 1*2;
 		text3 = new JButton( "Mask 0.0" );
 		text3.setBorderPainted( false );
 		text3.setForeground( color );
@@ -409,17 +409,17 @@ public class MLTool implements Command, PlugIn
 		} );
 		dialog.add( text3, c );
 
-		c.gridx = 1;
+		c.gridx = 1*2;
 		c.gridy = 1;
-		c.gridwidth = 2;
+		c.gridwidth = 2*2;
 		sliderMask = new JSlider( 0, 100 );
 		sliderMask.setValue( defaultMask );
 		sliderMask.addChangeListener( e -> interpolateMainImage() );
 		dialog.add( sliderMask, c );
 
-		c.gridx = 3;
+		c.gridx = 3*2;
 		c.gridy = 1;
-		c.gridwidth = 1;
+		c.gridwidth = 1*2;
 		text4 = new JButton( "Mask 1.0" );
 		text4.setBorderPainted( false );
 		text4.setForeground( color );
@@ -435,28 +435,28 @@ public class MLTool implements Command, PlugIn
 		// GRID Y=2
 		c.gridx = 0;
 		c.gridy = 2;
-		c.gridwidth = 1;
+		c.gridwidth = 1*2;
 		back = new JButton( "Prev. Img" );
 		back.addActionListener( e -> sliderImg.setValue( sliderImg.getValue() - 1) ) ;
 		dialog.add( back, c );
 
-		c.gridx = 1;
+		c.gridx = 1*2;
 		c.gridy = 2;
-		c.gridwidth = 1;
+		c.gridwidth = 1*2;
 		forward = new JButton( "Next Img" );
 		forward.addActionListener( e -> sliderImg.setValue( sliderImg.getValue() + 1) ) ;
 		dialog.add( forward, c );
 
-		c.gridx = 2;
+		c.gridx = 2*2;
 		c.gridy = 2;
-		c.gridwidth = 1;
+		c.gridwidth = 1*2;
 		save = new JButton( "Save" );
 		save.addActionListener( e -> save() );
 		dialog.add( save, c );
 
-		c.gridx = 3;
+		c.gridx = 3*2;
 		c.gridy = 2;
-		c.gridwidth = 1;
+		c.gridwidth = 1*2;
 		quit = new JButton( "Quit" );
 		quit.addActionListener( e ->
 		{
@@ -478,12 +478,12 @@ public class MLTool implements Command, PlugIn
 		dialog.add( quit, c );
 
 		// GRID Y=3
-		if ( json == null )
+		if ( json == null || json.trim().length() == 0 )
 		{
 			c.fill = GridBagConstraints.HORIZONTAL;
 			c.gridx = 0;
 			c.gridy = 3;
-			c.gridwidth = 4;
+			c.gridwidth = 4*2;
 			c.gridheight = 2;
 			c.ipady = 200;
 			c.ipadx = 300;
@@ -508,7 +508,7 @@ public class MLTool implements Command, PlugIn
 
 			c.gridx = 0;
 			c.gridy = 3;
-			c.gridwidth = 4;
+			c.gridwidth = 4*2;
 			c.gridheight = 1;
 			final JLabel featureLabel = new JLabel( featureList.get( 0 ).name, SwingConstants.CENTER );
 			featureLabel.setBackground( Color.RED );
@@ -519,7 +519,7 @@ public class MLTool implements Command, PlugIn
 			// GRID Y=4
 			c.gridx = 0;
 			c.gridy = 4;
-			c.gridwidth = 4;
+			c.gridwidth = 4*2;
 			c.gridheight = 1;
 			final JLabel featureDescMinusOne = new JLabel( "-: " + featureList.get( 0 ).minusOne, SwingConstants.CENTER );
 			dialog.add( featureDescMinusOne, c );
@@ -527,7 +527,7 @@ public class MLTool implements Command, PlugIn
 			// GRID Y=5
 			c.gridx = 0;
 			c.gridy = 5;
-			c.gridwidth = 4;
+			c.gridwidth = 4*2;
 			c.gridheight = 1;
 			final JLabel featureDescZero = new JLabel( "0: " + featureList.get( 0 ).zero, SwingConstants.CENTER );
 			dialog.add( featureDescZero, c );
@@ -535,7 +535,7 @@ public class MLTool implements Command, PlugIn
 			// GRID Y=6
 			c.gridx = 0;
 			c.gridy = 6;
-			c.gridwidth = 4;
+			c.gridwidth = 4*2;
 			c.gridheight = 1;
 			final JLabel featureDescPlusOne = new JLabel( "+: " + featureList.get( 0 ).plusOne, SwingConstants.CENTER );
 			dialog.add( featureDescPlusOne, c );
@@ -553,7 +553,7 @@ public class MLTool implements Command, PlugIn
 			final JButton buttonZero = new JButton( " 0 " );;
 			dialog.add( buttonZero, c );
 
-			c.gridx = 1;
+			c.gridx = 2;
 			c.gridy = 7;
 			c.gridwidth = 1;
 			final JButton buttonPlus1 = new JButton( " + " );;
