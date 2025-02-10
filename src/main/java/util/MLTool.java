@@ -20,14 +20,17 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.stream.IntStream;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTextArea;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import org.janelia.saalfeldlab.n5.GsonUtils;
@@ -101,7 +104,13 @@ public class MLTool implements Command, PlugIn
 
 	public static class Feature
 	{
+		final String name;
 		String minusOne, zero, plusOne;
+
+		public Feature( String name )
+		{
+			this.name = name;
+		}
 	}
 
 	public void setup( final String dir )
@@ -259,7 +268,7 @@ public class MLTool implements Command, PlugIn
 
 				final JsonObject featureElement = jo.getAsJsonObject( s );
 
-				final Feature feature = new Feature();
+				final Feature feature = new Feature( s );
 
 				feature.minusOne = featureElement.get( "-1" ).getAsString();
 				feature.zero = featureElement.get( "0" ).getAsString();
@@ -356,6 +365,7 @@ public class MLTool implements Command, PlugIn
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.HORIZONTAL;
 
+		// GRID Y=0
 		c.gridx = 0;
 		c.gridy = 0;
 		c.gridwidth = 1;
@@ -383,6 +393,7 @@ public class MLTool implements Command, PlugIn
 		text2.setBorderPainted( false );
 		dialog.add( text2, c );
 
+		// GRID Y=1
 		c.gridx = 0;
 		c.gridy = 1;
 		c.gridwidth = 1;
@@ -421,7 +432,7 @@ public class MLTool implements Command, PlugIn
 		} );
 		dialog.add( text4, c );
 
-
+		// GRID Y=2
 		c.gridx = 0;
 		c.gridy = 2;
 		c.gridwidth = 1;
@@ -466,6 +477,7 @@ public class MLTool implements Command, PlugIn
 		});
 		dialog.add( quit, c );
 
+		// GRID Y=3
 		if ( json == null )
 		{
 			c.fill = GridBagConstraints.HORIZONTAL;
@@ -493,12 +505,60 @@ public class MLTool implements Command, PlugIn
 			}
 
 			IJ.log( "Loaded " + featureList.size() + " features from json ... ");
-			//r.listAttributes(json)
-			//JsonParser gson = new GsonFactory().createJsonParser(""+json);
-			//new Gson().
-			//new Gson().
-			// TODO: new elemnts
-			
+
+			c.gridx = 0;
+			c.gridy = 3;
+			c.gridwidth = 4;
+			c.gridheight = 1;
+			final JLabel featureLabel = new JLabel( featureList.get( 0 ).name, SwingConstants.CENTER );
+			featureLabel.setBackground( Color.RED );
+			featureLabel.setOpaque(true);
+			featureLabel.setBorder( BorderFactory.createLineBorder(Color.BLACK, 1) );
+			dialog.add( featureLabel, c );
+
+			// GRID Y=4
+			c.gridx = 0;
+			c.gridy = 4;
+			c.gridwidth = 4;
+			c.gridheight = 1;
+			final JLabel featureDescMinusOne = new JLabel( "-: " + featureList.get( 0 ).minusOne, SwingConstants.CENTER );
+			dialog.add( featureDescMinusOne, c );
+
+			// GRID Y=5
+			c.gridx = 0;
+			c.gridy = 5;
+			c.gridwidth = 4;
+			c.gridheight = 1;
+			final JLabel featureDescZero = new JLabel( "0: " + featureList.get( 0 ).zero, SwingConstants.CENTER );
+			dialog.add( featureDescZero, c );
+
+			// GRID Y=6
+			c.gridx = 0;
+			c.gridy = 6;
+			c.gridwidth = 4;
+			c.gridheight = 1;
+			final JLabel featureDescPlusOne = new JLabel( "+: " + featureList.get( 0 ).plusOne, SwingConstants.CENTER );
+			dialog.add( featureDescPlusOne, c );
+
+			// GRID Y=7
+			c.gridx = 0;
+			c.gridy = 7;
+			c.gridwidth = 1;
+			final JButton buttonMinus1 = new JButton( " - " );
+			dialog.add( buttonMinus1, c );
+
+			c.gridx = 1;
+			c.gridy = 7;
+			c.gridwidth = 1;
+			final JButton buttonZero = new JButton( " 0 " );;
+			dialog.add( buttonZero, c );
+
+			c.gridx = 1;
+			c.gridy = 7;
+			c.gridwidth = 1;
+			final JButton buttonPlus1 = new JButton( " + " );;
+			dialog.add( buttonPlus1, c );
+
 		}
 
 		// show dialog
