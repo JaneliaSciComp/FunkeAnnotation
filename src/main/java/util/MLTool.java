@@ -26,22 +26,21 @@ import javax.swing.JColorChooser;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 import org.janelia.saalfeldlab.n5.GsonUtils;
-import org.janelia.saalfeldlab.n5.N5FSReader;
 import org.scijava.command.Command;
 import org.scijava.plugin.Plugin;
 
-import com.google.api.client.json.JsonParser;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonReader;
@@ -510,8 +509,8 @@ public class MLTool implements Command, PlugIn
 			c.gridy = 3;
 			c.gridwidth = 4*2;
 			c.gridheight = 1;
-			final JLabel featureLabel = new JLabel( featureList.get( 0 ).name, SwingConstants.CENTER );
-			featureLabel.setBackground( Color.RED );
+			final JLabel featureLabel = new JLabel( "Feature 1/" + featureList.size() + ": " + featureList.get( 0 ).name, SwingConstants.CENTER );
+			featureLabel.setBackground( new Color( 255, 128, 128 ) );
 			featureLabel.setOpaque(true);
 			featureLabel.setBorder( BorderFactory.createLineBorder(Color.BLACK, 1) );
 			dialog.add( featureLabel, c );
@@ -522,6 +521,7 @@ public class MLTool implements Command, PlugIn
 			c.gridwidth = 4*2;
 			c.gridheight = 1;
 			final JLabel featureDescMinusOne = new JLabel( "-: " + featureList.get( 0 ).minusOne, SwingConstants.CENTER );
+			featureDescMinusOne.setFont( new Font( featureDescMinusOne.getFont().getName(), Font.PLAIN, featureDescMinusOne.getFont().getSize() - 2) );
 			dialog.add( featureDescMinusOne, c );
 
 			// GRID Y=5
@@ -530,6 +530,7 @@ public class MLTool implements Command, PlugIn
 			c.gridwidth = 4*2;
 			c.gridheight = 1;
 			final JLabel featureDescZero = new JLabel( "0: " + featureList.get( 0 ).zero, SwingConstants.CENTER );
+			featureDescZero.setFont( new Font( featureDescZero.getFont().getName(), Font.PLAIN, featureDescZero.getFont().getSize() - 2) );
 			dialog.add( featureDescZero, c );
 
 			// GRID Y=6
@@ -538,6 +539,7 @@ public class MLTool implements Command, PlugIn
 			c.gridwidth = 4*2;
 			c.gridheight = 1;
 			final JLabel featureDescPlusOne = new JLabel( "+: " + featureList.get( 0 ).plusOne, SwingConstants.CENTER );
+			featureDescPlusOne.setFont( new Font( featureDescPlusOne.getFont().getName(), Font.PLAIN, featureDescPlusOne.getFont().getSize() - 2) );
 			dialog.add( featureDescPlusOne, c );
 
 			// GRID Y=7
@@ -545,25 +547,108 @@ public class MLTool implements Command, PlugIn
 			c.gridy = 7;
 			c.gridwidth = 1;
 			final JButton buttonMinus1 = new JButton( " - " );
+			buttonMinus1.setFont( buttonMinus1.getFont().deriveFont( Font.BOLD ) );
+			buttonMinus1.setForeground( Color.magenta );
 			dialog.add( buttonMinus1, c );
 
 			c.gridx = 1;
 			c.gridy = 7;
 			c.gridwidth = 1;
 			final JButton buttonZero = new JButton( " 0 " );;
+			buttonZero.setFont( buttonMinus1.getFont().deriveFont( Font.BOLD ) );
+			buttonZero.setForeground( Color.magenta );
 			dialog.add( buttonZero, c );
 
 			c.gridx = 2;
 			c.gridy = 7;
 			c.gridwidth = 1;
 			final JButton buttonPlus1 = new JButton( " + " );;
+			buttonPlus1.setFont( buttonMinus1.getFont().deriveFont( Font.BOLD ) );
+			buttonPlus1.setForeground( Color.magenta );
 			dialog.add( buttonPlus1, c );
 
+			c.gridx = 3;
+			c.gridy = 7;
+			c.gridwidth = 1;
+			final JLabel placeholder1 = new JLabel( "                  " );;
+			dialog.add( placeholder1, c );
+
+			c.gridx = 4;
+			c.gridy = 7;
+			c.gridwidth = 1;
+			final JLabel placeholder2 = new JLabel( "                  " );;
+			dialog.add( placeholder2, c );
+
+			c.gridx = 5;
+			c.gridy = 7;
+			c.gridwidth = 1;
+			final JButton buttonPrevFeature = new JButton( " -F " );;
+			buttonPrevFeature.setFont( buttonMinus1.getFont().deriveFont( Font.BOLD ) );
+			buttonPrevFeature.setForeground( Color.GREEN.darker().darker().darker() );
+			final JPopupMenu popupMenu1 = new JPopupMenu();
+			final JMenuItem item1 = new JMenuItem( "Previous un-annotated feature" );
+			item1.addActionListener( e -> {});
+			popupMenu1.add( item1 );
+			buttonPrevFeature.setComponentPopupMenu( popupMenu1 );
+			dialog.add( buttonPrevFeature, c );
+
+			c.gridx = 6;
+			c.gridy = 7;
+			c.gridwidth = 1;
+			final JButton buttonNextFeature = new JButton( " +F " );;
+			buttonNextFeature.setFont( buttonMinus1.getFont().deriveFont( Font.BOLD ) );
+			buttonNextFeature.setForeground( Color.GREEN.darker().darker().darker() );
+			final JPopupMenu popupMenu2 = new JPopupMenu();
+			final JMenuItem item2 = new JMenuItem( "Next un-annotated feature" );
+			item2.addActionListener( e -> {});
+			popupMenu2.add( item2 );
+			buttonNextFeature.setComponentPopupMenu( popupMenu2 );
+			dialog.add( buttonNextFeature, c );
+
+			c.gridx = 7;
+			c.gridy = 7;
+			c.gridwidth = 1;
+			final JButton buttonNextImage = new JButton( " X " );;
+			buttonNextImage.setFont( buttonMinus1.getFont().deriveFont( Font.BOLD ) );
+			buttonNextImage.setForeground( Color.RED );
+			dialog.add( buttonNextImage, c );
+
+			// GRID Y=8
+			c.gridx = 0;
+			c.gridy = 8;
+			c.gridwidth = 1;
+			final JLabel barMinus1 = new JLabel("     ");
+			barMinus1.setFont( new Font( "Arial", Font.PLAIN, 6 ) );
+			barMinus1.setBackground( Color.magenta );
+			barMinus1.setOpaque( true );
+			dialog.add( barMinus1, c );
+
+			c.gridx = 1;
+			c.gridy = 8;
+			c.gridwidth = 1;
+			final JLabel barZero = new JLabel("     ");
+			barZero.setFont( new Font( "Arial", Font.PLAIN, 6 ) );
+			barZero.setBackground( Color.magenta );
+			barZero.setOpaque( false );
+			dialog.add( barZero, c );
+
+			c.gridx = 0;
+			c.gridy = 8;
+			c.gridwidth = 1;
+			final JLabel barPlus1 = new JLabel("     ");
+			barPlus1.setFont( new Font( "Arial", Font.PLAIN, 6 ) );
+			barPlus1.setBackground( Color.magenta );
+			barPlus1.setOpaque( false );
+			dialog.add( barPlus1, c );
 		}
 
 		// show dialog
 		dialog.pack();
 		dialog.setVisible(true);
+
+		System.out.println( back.getSize() );
+		System.out.println( forward.getSize() );
+
 
 		// setup ImageJ window
 		this.main = new HashMap<>();
@@ -654,6 +739,8 @@ public class MLTool implements Command, PlugIn
 
 	public static void main( String[] args )
 	{
+		//try { UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName()); } catch (Exception e) { }
+
 		new ImageJ();
 		defaultDirectory = "/Users/preibischs/Documents/Janelia/Projects/Funke/phase1/";
 		defaultJSON = "/Users/preibischs/Documents/Janelia/Projects/Funke/phase2_example.json";
