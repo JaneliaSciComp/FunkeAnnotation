@@ -505,6 +505,24 @@ public class MLTool implements Command, PlugIn
 
 			IJ.log( "Loaded " + featureList.size() + " features from json ... ");
 
+			final JPopupMenu popupMenu3 = new JPopupMenu();
+			final JMenuItem item3 = new JMenuItem( "Next image without annotations" );
+			final JMenuItem item4 = new JMenuItem( "Next image marked as invalid" );
+			item3.addActionListener( e -> {});
+			item4.addActionListener( e -> {});
+			popupMenu3.add( item3 );
+			popupMenu3.add( item4 );
+			forward.setComponentPopupMenu( popupMenu3 );
+
+			final JPopupMenu popupMenu4 = new JPopupMenu();
+			final JMenuItem item5 = new JMenuItem( "Previous image without annotations" );
+			final JMenuItem item6 = new JMenuItem( "Previous image marked as invalid" );
+			item5.addActionListener( e -> {});
+			item6.addActionListener( e -> {});
+			popupMenu4.add( item5 );
+			popupMenu4.add( item6 );
+			back.setComponentPopupMenu( popupMenu4 );
+
 			c.gridx = 0;
 			c.gridy = 3;
 			c.gridwidth = 4*2;
