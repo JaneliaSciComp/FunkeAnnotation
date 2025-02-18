@@ -390,137 +390,137 @@ public class MLTool implements Command, PlugIn
 			c.gridy = 3;
 			c.gridwidth = 4*2;
 			c.gridheight = 1;
-			final JLabel featureLabel = new JLabel( "Feature 1/" + state2.featureList.size() + ": " + state2.featureList.get( 0 ).name, SwingConstants.CENTER );
-			featureLabel.setBackground( new Color( 255, 128, 128 ) );
-			featureLabel.setOpaque(true);
-			featureLabel.setBorder( BorderFactory.createLineBorder(Color.BLACK, 1) );
-			state2.dialog.add( featureLabel, c );
+			state2.featureLabel = new JLabel( "Feature 1/" + state2.featureList.size() + ": " + state2.featureList.get( 0 ).name, SwingConstants.CENTER );
+			state2.featureLabel.setBackground( new Color( 255, 128, 128 ) );
+			state2.featureLabel.setOpaque(true);
+			state2.featureLabel.setBorder( BorderFactory.createLineBorder(Color.BLACK, 1) );
+			state2.dialog.add( state2.featureLabel, c );
 
 			// GRID Y=4
 			c.gridx = 0;
 			c.gridy = 4;
 			c.gridwidth = 4*2;
 			c.gridheight = 1;
-			final JLabel featureDescMinusOne = new JLabel( "-: " + state2.featureList.get( 0 ).minusOne, SwingConstants.CENTER );
-			featureDescMinusOne.setFont( new Font( featureDescMinusOne.getFont().getName(), Font.PLAIN, featureDescMinusOne.getFont().getSize() - 2) );
-			state2.dialog.add( featureDescMinusOne, c );
+			state2.featureDescMinusOne = new JLabel( "-: " + state2.featureList.get( 0 ).minusOne, SwingConstants.CENTER );
+			state2.featureDescMinusOne.setFont( new Font( state2.featureDescMinusOne.getFont().getName(), Font.PLAIN, state2.featureDescMinusOne.getFont().getSize() - 2) );
+			state2.dialog.add( state2.featureDescMinusOne, c );
 
 			// GRID Y=5
 			c.gridx = 0;
 			c.gridy = 5;
 			c.gridwidth = 4*2;
 			c.gridheight = 1;
-			final JLabel featureDescZero = new JLabel( "0: " + state2.featureList.get( 0 ).zero, SwingConstants.CENTER );
-			featureDescZero.setFont( new Font( featureDescZero.getFont().getName(), Font.PLAIN, featureDescZero.getFont().getSize() - 2) );
-			state2.dialog.add( featureDescZero, c );
+			state2.featureDescZero = new JLabel( "0: " + state2.featureList.get( 0 ).zero, SwingConstants.CENTER );
+			state2.featureDescZero.setFont( new Font( state2.featureDescZero.getFont().getName(), Font.PLAIN, state2.featureDescZero.getFont().getSize() - 2) );
+			state2.dialog.add( state2.featureDescZero, c );
 
 			// GRID Y=6
 			c.gridx = 0;
 			c.gridy = 6;
 			c.gridwidth = 4*2;
 			c.gridheight = 1;
-			final JLabel featureDescPlusOne = new JLabel( "+: " + state2.featureList.get( 0 ).plusOne, SwingConstants.CENTER );
-			featureDescPlusOne.setFont( new Font( featureDescPlusOne.getFont().getName(), Font.PLAIN, featureDescPlusOne.getFont().getSize() - 2) );
-			state2.dialog.add( featureDescPlusOne, c );
+			state2.featureDescPlusOne = new JLabel( "+: " + state2.featureList.get( 0 ).plusOne, SwingConstants.CENTER );
+			state2.featureDescPlusOne.setFont( new Font( state2.featureDescPlusOne.getFont().getName(), Font.PLAIN, state2.featureDescPlusOne.getFont().getSize() - 2) );
+			state2.dialog.add( state2.featureDescPlusOne, c );
 
 			// GRID Y=7
 			c.gridx = 0;
 			c.gridy = 7;
 			c.gridwidth = 1;
-			final JButton buttonMinus1 = new JButton( " - " );
-			buttonMinus1.setFont( buttonMinus1.getFont().deriveFont( Font.BOLD ) );
-			buttonMinus1.setForeground( Color.magenta );
-			state2.dialog.add( buttonMinus1, c );
+			state2.buttonMinus1 = new JButton( " - " );
+			state2.buttonMinus1.setFont( state2.buttonMinus1.getFont().deriveFont( Font.BOLD ) );
+			state2.buttonMinus1.setForeground( Color.magenta );
+			state2.dialog.add( state2.buttonMinus1, c );
 
 			c.gridx = 1;
 			c.gridy = 7;
 			c.gridwidth = 1;
-			final JButton buttonZero = new JButton( " 0 " );;
-			buttonZero.setFont( buttonMinus1.getFont().deriveFont( Font.BOLD ) );
-			buttonZero.setForeground( Color.magenta );
-			state2.dialog.add( buttonZero, c );
+			state2.buttonZero = new JButton( " 0 " );;
+			state2.buttonZero.setFont( state2.buttonMinus1.getFont().deriveFont( Font.BOLD ) );
+			state2.buttonZero.setForeground( Color.magenta );
+			state2.dialog.add( state2.buttonZero, c );
 
 			c.gridx = 2;
 			c.gridy = 7;
 			c.gridwidth = 1;
-			final JButton buttonPlus1 = new JButton( " + " );;
-			buttonPlus1.setFont( buttonMinus1.getFont().deriveFont( Font.BOLD ) );
-			buttonPlus1.setForeground( Color.magenta );
-			state2.dialog.add( buttonPlus1, c );
+			state2.buttonPlus1 = new JButton( " + " );;
+			state2.buttonPlus1.setFont( state2.buttonMinus1.getFont().deriveFont( Font.BOLD ) );
+			state2.buttonPlus1.setForeground( Color.magenta );
+			state2.dialog.add( state2.buttonPlus1, c );
 
 			c.gridx = 3;
 			c.gridy = 7;
 			c.gridwidth = 1;
-			final JLabel placeholder1 = new JLabel( "                  " );;
-			state2.dialog.add( placeholder1, c );
+			state2.placeholder1 = new JLabel( "                  " );;
+			state2.dialog.add( state2.placeholder1, c );
 
 			c.gridx = 4;
 			c.gridy = 7;
 			c.gridwidth = 1;
-			final JLabel placeholder2 = new JLabel( "                  " );;
-			state2.dialog.add( placeholder2, c );
+			state2.placeholder2 = new JLabel( "                  " );;
+			state2.dialog.add( state2.placeholder2, c );
 
 			c.gridx = 5;
 			c.gridy = 7;
 			c.gridwidth = 1;
-			final JButton buttonPrevFeature = new JButton( " -F " );;
-			buttonPrevFeature.setFont( buttonMinus1.getFont().deriveFont( Font.BOLD ) );
-			buttonPrevFeature.setForeground( Color.GREEN.darker().darker().darker() );
+			state2.buttonPrevFeature = new JButton( " -F " );;
+			state2.buttonPrevFeature.setFont( state2.buttonMinus1.getFont().deriveFont( Font.BOLD ) );
+			state2.buttonPrevFeature.setForeground( Color.GREEN.darker().darker().darker() );
 			final JPopupMenu popupMenu1 = new JPopupMenu();
 			final JMenuItem item1 = new JMenuItem( "Previous un-annotated feature" );
 			item1.addActionListener( e -> {});
 			popupMenu1.add( item1 );
-			buttonPrevFeature.setComponentPopupMenu( popupMenu1 );
-			state2.dialog.add( buttonPrevFeature, c );
+			state2.buttonPrevFeature.setComponentPopupMenu( popupMenu1 );
+			state2.dialog.add( state2.buttonPrevFeature, c );
 
 			c.gridx = 6;
 			c.gridy = 7;
 			c.gridwidth = 1;
-			final JButton buttonNextFeature = new JButton( " +F " );;
-			buttonNextFeature.setFont( buttonMinus1.getFont().deriveFont( Font.BOLD ) );
-			buttonNextFeature.setForeground( Color.GREEN.darker().darker().darker() );
+			state2.buttonNextFeature = new JButton( " +F " );;
+			state2.buttonNextFeature.setFont( state2.buttonMinus1.getFont().deriveFont( Font.BOLD ) );
+			state2.buttonNextFeature.setForeground( Color.GREEN.darker().darker().darker() );
 			final JPopupMenu popupMenu2 = new JPopupMenu();
 			final JMenuItem item2 = new JMenuItem( "Next un-annotated feature" );
 			item2.addActionListener( e -> {});
 			popupMenu2.add( item2 );
-			buttonNextFeature.setComponentPopupMenu( popupMenu2 );
-			state2.dialog.add( buttonNextFeature, c );
+			state2.buttonNextFeature.setComponentPopupMenu( popupMenu2 );
+			state2.dialog.add( state2.buttonNextFeature, c );
 
 			c.gridx = 7;
 			c.gridy = 7;
 			c.gridwidth = 1;
-			final JButton buttonNextImage = new JButton( " X " );;
-			buttonNextImage.setFont( buttonMinus1.getFont().deriveFont( Font.BOLD ) );
-			buttonNextImage.setForeground( Color.RED );
-			state2.dialog.add( buttonNextImage, c );
+			state2.buttonNextImage = new JButton( " X " );;
+			state2.buttonNextImage.setFont( state2.buttonMinus1.getFont().deriveFont( Font.BOLD ) );
+			state2.buttonNextImage.setForeground( Color.RED );
+			state2.dialog.add( state2.buttonNextImage, c );
 
 			// GRID Y=8
 			c.gridx = 0;
 			c.gridy = 8;
 			c.gridwidth = 1;
-			final JLabel barMinus1 = new JLabel("     ");
-			barMinus1.setFont( new Font( "Arial", Font.PLAIN, 6 ) );
-			barMinus1.setBackground( Color.magenta );
-			barMinus1.setOpaque( true );
-			state2.dialog.add( barMinus1, c );
+			state2.barMinus1 = new JLabel("     ");
+			state2.barMinus1.setFont( new Font( "Arial", Font.PLAIN, 6 ) );
+			state2.barMinus1.setBackground( Color.magenta );
+			state2.barMinus1.setOpaque( true );
+			state2.dialog.add( state2.barMinus1, c );
 
 			c.gridx = 1;
 			c.gridy = 8;
 			c.gridwidth = 1;
-			final JLabel barZero = new JLabel("     ");
-			barZero.setFont( new Font( "Arial", Font.PLAIN, 6 ) );
-			barZero.setBackground( Color.magenta );
-			barZero.setOpaque( false );
-			state2.dialog.add( barZero, c );
+			state2.barZero = new JLabel("     ");
+			state2.barZero.setFont( new Font( "Arial", Font.PLAIN, 6 ) );
+			state2.barZero.setBackground( Color.magenta );
+			state2.barZero.setOpaque( false );
+			state2.dialog.add( state2.barZero, c );
 
 			c.gridx = 0;
 			c.gridy = 8;
 			c.gridwidth = 1;
-			final JLabel barPlus1 = new JLabel("     ");
-			barPlus1.setFont( new Font( "Arial", Font.PLAIN, 6 ) );
-			barPlus1.setBackground( Color.magenta );
-			barPlus1.setOpaque( false );
-			state2.dialog.add( barPlus1, c );
+			state2.barPlus1 = new JLabel("     ");
+			state2.barPlus1.setFont( new Font( "Arial", Font.PLAIN, 6 ) );
+			state2.barPlus1.setBackground( Color.magenta );
+			state2.barPlus1.setOpaque( false );
+			state2.dialog.add( state2.barPlus1, c );
 		}
 
 		// show dialog

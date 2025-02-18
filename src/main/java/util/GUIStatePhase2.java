@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.JButton;
+import javax.swing.JLabel;
+
 import org.janelia.saalfeldlab.n5.GsonUtils;
 
 import com.google.gson.Gson;
@@ -23,6 +26,10 @@ public class GUIStatePhase2 extends GUIState
 	public List<Feature> featureList;
 	public int numImages, numFeatures;
 	public final ArrayList< ArrayList< FeatureState > > featuresState = new ArrayList<>();
+
+	JLabel featureLabel, featureDescMinusOne, featureDescZero, featureDescPlusOne;
+	JLabel placeholder1, placeholder2, barMinus1, barZero, barPlus1;
+	JButton buttonMinus1, buttonZero, buttonPlus1, buttonPrevFeature, buttonNextFeature, buttonNextImage;
 
 	public boolean setup( final int numImages, final String json )
 	{
