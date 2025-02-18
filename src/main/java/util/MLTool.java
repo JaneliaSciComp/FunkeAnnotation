@@ -4,18 +4,10 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.stream.IntStream;
@@ -34,16 +26,9 @@ import javax.swing.JSlider;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 
-import org.janelia.saalfeldlab.n5.GsonUtils;
 import org.scijava.command.Command;
 import org.scijava.plugin.Plugin;
-
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.stream.JsonReader;
 
 import fiji.tool.SliceListener;
 import fiji.tool.SliceObserver;
@@ -61,7 +46,6 @@ import ij.plugin.Zoom;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import net.imglib2.type.numeric.ARGBType;
-import net.imglib2.util.Pair;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Funke lab>Annotator ...")
 public class MLTool implements Command, PlugIn
@@ -74,7 +58,6 @@ public class MLTool implements Command, PlugIn
 	// directory a,b,m: increasing ID, no leading zeros
 	// Done: save in the parent directory
 	// Done: first iteration a single text file
-	public static final String notes = "notes.txt";
 
 	final ForkJoinPool myPool = new ForkJoinPool( Runtime.getRuntime().availableProcessors() );
 
@@ -91,190 +74,6 @@ public class MLTool implements Command, PlugIn
 	SliceObserver sliceObserver;
 	String dir;
 	ByteProcessor[] imgsA, imgsB, imgsM;
-
-	public abstract static class GUIStateBasic
-	{
-		final String labelDialog = "Annotation for image ";
-		final String impDialog = "Image ";
-
-		JDialog dialog;
-		JSlider sliderImg, sliderMask;
-		JButton text1, text2, text3, text4;
-		JButton back, forward, save, quit;
-
-		public abstract boolean save( final String dir );
-		public abstract boolean load( final String dir );
-	}
-
-	public static class GUIStatePhase1 extends GUIStateBasic
-	{
-		JTextArea textfield;
-
-		@Override
-		public boolean load( final String dir )
-		{
-			final File f = new File( dir, notes );
-
-			if ( !f.exists() )
-				return false;
-
-			try
-			{
-				final BufferedReader inputFile = new BufferedReader(new FileReader( f ));
-
-				String concatenated = "";
-				String l = null;
-
-				while ( ( l = inputFile.readLine() ) != null )
-					concatenated += l + "\n";
-
-				concatenated = concatenated.trim();
-
-				textfield.setText( concatenated );
-
-				inputFile.close();
-			}
-			catch (Exception e)
-			{
-				IJ.log( "Couldn't load file: '" + f + "': " + e);
-				e.printStackTrace();
-				return false;
-			}
-
-			IJ.log( "Successfully LOADED file: '" + f + "'." );
-
-			return true;
-		}
-
-		@Override
-		public boolean save( final String dir )
-		{
-			final String fn = new File( dir, notes ).getAbsolutePath();
-			try
-			{
-				final PrintWriter outputFile = new PrintWriter(new FileWriter( fn ));
-				outputFile.print( textfield.getText().trim() );
-				outputFile.close();
-			}
-			catch (IOException e)
-			{
-				IJ.log( "Couldn't save file: '" + fn + "': " + e);
-				e.printStackTrace();
-				return false;
-			}
-
-			IJ.log( "Successfully SAVED file: '" + fn + "'." );
-
-			return true;
-		}
-	}
-
-	public static class GUIStatePhase2 extends GUIStateBasic
-	{
-		// the state of the GUI when rating images
-		public enum FeatureState { NEGATIVE, ZERO, POSITIVE, NOT_ASSIGNED, INVALID }
-
-		List<Feature> featureList;
-		int numImages, numFeatures;
-		final ArrayList< ArrayList< FeatureState > > featuresState = new ArrayList<>();
-
-		public boolean setup( final int numImages, final String json )
-		{
-			featureList = loadJSON( json );
-
-			if ( featureList == null )
-			{
-				IJ.log( "failed to load json: " + json );
-				return false;
-			}
-
-			IJ.log( "Loaded " + featureList.size() + " features from json ... ");
-
-			this.numImages = numImages;
-			this.numFeatures = featureList.size();
-
-			for ( int i = 0; i < numImages; ++i )
-			{
-				final ArrayList< FeatureState > states = new ArrayList<>( numFeatures );
-
-				for ( int j = 0; j < numFeatures; ++j )
-					states.add( FeatureState.NOT_ASSIGNED );
-
-				this.featuresState.add( states );
-			}
-
-			return true;
-		}
-
-		@Override
-		public boolean save(String dir) {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-		@Override
-		public boolean load(String dir) {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-		// just for loading ...
-		private static class Feature
-		{
-			final String name;
-			String minusOne, zero, plusOne;
-
-			public Feature( String name )
-			{
-				this.name = name;
-			}
-		}
-
-		public static List< Feature > loadJSON( final String json )
-		{
-			try 
-			{
-				final Gson gson = new Gson();
-				final JsonReader reader = new JsonReader(new FileReader( json ));
-				final JsonElement element = gson.fromJson(reader, JsonElement.class );
-
-				final Map<String, Class<?>> sc = GsonUtils.listAttributes( element );
-				final JsonObject jo = element.getAsJsonObject();
-
-				final List< Feature > featureList = new ArrayList<>();
-
-				sc.forEach( (s,c) -> 
-				{
-					IJ.log( "\nFeature: " + s + " [class=" + c + "]");
-
-					final JsonObject featureElement = jo.getAsJsonObject( s );
-
-					final Feature feature = new Feature( s );
-
-					feature.minusOne = featureElement.get( "-1" ).getAsString();
-					feature.zero = featureElement.get( "0" ).getAsString();
-					feature.plusOne = featureElement.get( "1" ).getAsString();
-
-					featureList.add( feature );
-
-					IJ.log( "-1: " + feature.minusOne );
-					IJ.log( "0: " + feature.zero );
-					IJ.log( "+1 :" + feature.plusOne );
-
-					//featureElement.entrySet().forEach( e -> System.out.println(e.getKey() + ": " + e.getValue().getAsString()));//forEach( (s1,e1) -> System.out.println( s1 ) );
-					//System.out.println();
-				} );
-
-				return featureList;
-			}
-			catch (FileNotFoundException e1)
-			{
-				e1.printStackTrace();
-				return null;
-			}
-		}
-	}
-
 
 	public void setup( final String dir )
 	{
@@ -360,7 +159,7 @@ public class MLTool implements Command, PlugIn
 		this.mask = mask;
 	}
 
-	public synchronized void interpolateMainImage( final GUIStateBasic state )
+	public synchronized void interpolateMainImage( final GUIState state )
 	{
 		if ( task != null )
 		{
@@ -423,7 +222,7 @@ public class MLTool implements Command, PlugIn
 		setColor( defaultColor );
 
 		final boolean phase1 = (json == null || json.trim().length() == 0);
-		final GUIStateBasic state = ( phase1 ? new GUIStatePhase1() : new GUIStatePhase2() );
+		final GUIState state = ( phase1 ? new GUIStatePhase1() : new GUIStatePhase2() );
 
 		// create dialog
 		state.dialog = new JDialog( (JFrame)null, state.labelDialog + "0", false);
@@ -565,6 +364,9 @@ public class MLTool implements Command, PlugIn
 		else
 		{
 			final GUIStatePhase2 state2 = (GUIStatePhase2)state;
+
+			if ( !state2.setup( imgsA.length, json ) )
+				return;
 
 			final JPopupMenu popupMenu3 = new JPopupMenu();
 			final JMenuItem item3 = new JMenuItem( "Next image without annotations" );
