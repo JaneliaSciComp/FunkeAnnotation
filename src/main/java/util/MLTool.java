@@ -61,6 +61,7 @@ import ij.plugin.Zoom;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import net.imglib2.type.numeric.ARGBType;
+import net.imglib2.util.Pair;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Funke lab>Annotator ...")
 public class MLTool implements Command, PlugIn
@@ -79,18 +80,8 @@ public class MLTool implements Command, PlugIn
 
 	volatile ForkJoinTask<?> task = null;
 
-	final String labelDialog = "Annotation for image ";
-	final String impDialog = "Image ";
-
-	JDialog dialog;
-	JSlider sliderImg, sliderMask;
-	JButton text1, text2, text3, text4;
-	JButton back, forward, save, quit;
-	JTextArea textfield;
-
 	ByteProcessor ip1, ip2, mask;
 	ImagePlus mainImp;
-	//ColorProcessor main;
 	HashMap< Integer, ColorProcessor > main;
 	ImageStack stack;
 
@@ -101,16 +92,189 @@ public class MLTool implements Command, PlugIn
 	String dir;
 	ByteProcessor[] imgsA, imgsB, imgsM;
 
-	public static class Feature
+	public abstract static class GUIStateBasic
 	{
-		final String name;
-		String minusOne, zero, plusOne;
+		final String labelDialog = "Annotation for image ";
+		final String impDialog = "Image ";
 
-		public Feature( String name )
+		JDialog dialog;
+		JSlider sliderImg, sliderMask;
+		JButton text1, text2, text3, text4;
+		JButton back, forward, save, quit;
+
+		public abstract boolean save( final String dir );
+		public abstract boolean load( final String dir );
+	}
+
+	public static class GUIStatePhase1 extends GUIStateBasic
+	{
+		JTextArea textfield;
+
+		@Override
+		public boolean load( final String dir )
 		{
-			this.name = name;
+			final File f = new File( dir, notes );
+
+			if ( !f.exists() )
+				return false;
+
+			try
+			{
+				final BufferedReader inputFile = new BufferedReader(new FileReader( f ));
+
+				String concatenated = "";
+				String l = null;
+
+				while ( ( l = inputFile.readLine() ) != null )
+					concatenated += l + "\n";
+
+				concatenated = concatenated.trim();
+
+				textfield.setText( concatenated );
+
+				inputFile.close();
+			}
+			catch (Exception e)
+			{
+				IJ.log( "Couldn't load file: '" + f + "': " + e);
+				e.printStackTrace();
+				return false;
+			}
+
+			IJ.log( "Successfully LOADED file: '" + f + "'." );
+
+			return true;
+		}
+
+		@Override
+		public boolean save( final String dir )
+		{
+			final String fn = new File( dir, notes ).getAbsolutePath();
+			try
+			{
+				final PrintWriter outputFile = new PrintWriter(new FileWriter( fn ));
+				outputFile.print( textfield.getText().trim() );
+				outputFile.close();
+			}
+			catch (IOException e)
+			{
+				IJ.log( "Couldn't save file: '" + fn + "': " + e);
+				e.printStackTrace();
+				return false;
+			}
+
+			IJ.log( "Successfully SAVED file: '" + fn + "'." );
+
+			return true;
 		}
 	}
+
+	public static class GUIStatePhase2 extends GUIStateBasic
+	{
+		// the state of the GUI when rating images
+		public enum FeatureState { NEGATIVE, ZERO, POSITIVE, NOT_ASSIGNED, INVALID }
+
+		List<Feature> featureList;
+		int numImages, numFeatures;
+		final ArrayList< ArrayList< FeatureState > > featuresState = new ArrayList<>();
+
+		public boolean setup( final int numImages, final String json )
+		{
+			featureList = loadJSON( json );
+
+			if ( featureList == null )
+			{
+				IJ.log( "failed to load json: " + json );
+				return false;
+			}
+
+			IJ.log( "Loaded " + featureList.size() + " features from json ... ");
+
+			this.numImages = numImages;
+			this.numFeatures = featureList.size();
+
+			for ( int i = 0; i < numImages; ++i )
+			{
+				final ArrayList< FeatureState > states = new ArrayList<>( numFeatures );
+
+				for ( int j = 0; j < numFeatures; ++j )
+					states.add( FeatureState.NOT_ASSIGNED );
+
+				this.featuresState.add( states );
+			}
+
+			return true;
+		}
+
+		@Override
+		public boolean save(String dir) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public boolean load(String dir) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		// just for loading ...
+		private static class Feature
+		{
+			final String name;
+			String minusOne, zero, plusOne;
+
+			public Feature( String name )
+			{
+				this.name = name;
+			}
+		}
+
+		public static List< Feature > loadJSON( final String json )
+		{
+			try 
+			{
+				final Gson gson = new Gson();
+				final JsonReader reader = new JsonReader(new FileReader( json ));
+				final JsonElement element = gson.fromJson(reader, JsonElement.class );
+
+				final Map<String, Class<?>> sc = GsonUtils.listAttributes( element );
+				final JsonObject jo = element.getAsJsonObject();
+
+				final List< Feature > featureList = new ArrayList<>();
+
+				sc.forEach( (s,c) -> 
+				{
+					IJ.log( "\nFeature: " + s + " [class=" + c + "]");
+
+					final JsonObject featureElement = jo.getAsJsonObject( s );
+
+					final Feature feature = new Feature( s );
+
+					feature.minusOne = featureElement.get( "-1" ).getAsString();
+					feature.zero = featureElement.get( "0" ).getAsString();
+					feature.plusOne = featureElement.get( "1" ).getAsString();
+
+					featureList.add( feature );
+
+					IJ.log( "-1: " + feature.minusOne );
+					IJ.log( "0: " + feature.zero );
+					IJ.log( "+1 :" + feature.plusOne );
+
+					//featureElement.entrySet().forEach( e -> System.out.println(e.getKey() + ": " + e.getValue().getAsString()));//forEach( (s1,e1) -> System.out.println( s1 ) );
+					//System.out.println();
+				} );
+
+				return featureList;
+			}
+			catch (FileNotFoundException e1)
+			{
+				e1.printStackTrace();
+				return null;
+			}
+		}
+	}
+
 
 	public void setup( final String dir )
 	{
@@ -196,7 +360,7 @@ public class MLTool implements Command, PlugIn
 		this.mask = mask;
 	}
 
-	public synchronized void interpolateMainImage()
+	public synchronized void interpolateMainImage( final GUIStateBasic state )
 	{
 		if ( task != null )
 		{
@@ -208,7 +372,7 @@ public class MLTool implements Command, PlugIn
 		{
 			task = myPool.submit(() ->
 				main.entrySet().parallelStream().parallel().forEach( entry ->
-					interpolateMask(ip1, ip2, (float)entry.getKey() / 100f, mask, (float)sliderMask.getValue() / 100f, r,g,b , entry.getValue())
+					interpolateMask(ip1, ip2, (float)entry.getKey() / 100f, mask, (float)state.sliderMask.getValue() / 100f, r,g,b , entry.getValue())
 				));//.get();
 		}
 		catch (Exception e)
@@ -248,106 +412,6 @@ public class MLTool implements Command, PlugIn
 		}
 	}
 
-	public List< Feature > loadJSON( final String json )
-	{
-		try 
-		{
-			final Gson gson = new Gson();
-			final JsonReader reader = new JsonReader(new FileReader( json ));
-			final JsonElement element = gson.fromJson(reader, JsonElement.class );
-
-			final Map<String, Class<?>> sc = GsonUtils.listAttributes( element );
-			final JsonObject jo = element.getAsJsonObject();
-
-			final List< Feature > featureList = new ArrayList<>();
-
-			sc.forEach( (s,c) -> 
-			{
-				IJ.log( "\nFeature: " + s + " [class=" + c + "]");
-
-				final JsonObject featureElement = jo.getAsJsonObject( s );
-
-				final Feature feature = new Feature( s );
-
-				feature.minusOne = featureElement.get( "-1" ).getAsString();
-				feature.zero = featureElement.get( "0" ).getAsString();
-				feature.plusOne = featureElement.get( "1" ).getAsString();
-
-				featureList.add( feature );
-
-				IJ.log( "-1: " + feature.minusOne );
-				IJ.log( "0: " + feature.zero );
-				IJ.log( "+1 :" + feature.plusOne );
-
-				//featureElement.entrySet().forEach( e -> System.out.println(e.getKey() + ": " + e.getValue().getAsString()));//forEach( (s1,e1) -> System.out.println( s1 ) );
-				//System.out.println();
-			} );
-
-			return featureList;
-		} catch (FileNotFoundException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-			return null;
-		}
-
-	}
-
-	public boolean load()
-	{
-		final File f = new File( dir, notes );
-
-		if ( !f.exists() )
-			return false;
-
-		try
-		{
-			final BufferedReader inputFile = new BufferedReader(new FileReader( f ));
-
-			String concatenated = "";
-			String l = null;
-
-			while ( ( l = inputFile.readLine() ) != null )
-				concatenated += l + "\n";
-
-			concatenated = concatenated.trim();
-
-			textfield.setText( concatenated );
-
-			inputFile.close();
-		}
-		catch (Exception e)
-		{
-			IJ.log( "Couldn't load file: '" + f + "': " + e);
-			e.printStackTrace();
-			return false;
-		}
-
-		IJ.log( "Successfully LOADED file: '" + f + "'." );
-
-		return true;
-	}
-
-	public boolean save()
-	{
-		final String fn = new File( dir, notes ).getAbsolutePath();
-		try
-		{
-			final PrintWriter outputFile = new PrintWriter(new FileWriter( fn ));
-			outputFile.print( textfield.getText().trim() );
-			outputFile.close();
-		}
-		catch (IOException e)
-		{
-			IJ.log( "Couldn't save file: '" + fn + "': " + e);
-			e.printStackTrace();
-			return false;
-		}
-
-		IJ.log( "Successfully SAVED file: '" + fn + "'." );
-
-		return true;
-	}
-
 	public void showDialog(
 			final int maxFrame,
 			final double defaultMagnification,
@@ -358,9 +422,12 @@ public class MLTool implements Command, PlugIn
 	{
 		setColor( defaultColor );
 
+		final boolean phase1 = (json == null || json.trim().length() == 0);
+		final GUIStateBasic state = ( phase1 ? new GUIStatePhase1() : new GUIStatePhase2() );
+
 		// create dialog
-		dialog = new JDialog( (JFrame)null, labelDialog + "0", false);
-		dialog.setLayout(new GridBagLayout());
+		state.dialog = new JDialog( (JFrame)null, state.labelDialog + "0", false);
+		state.dialog.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.HORIZONTAL;
 
@@ -368,98 +435,98 @@ public class MLTool implements Command, PlugIn
 		c.gridx = 0;
 		c.gridy = 0;
 		c.gridwidth = 1*2;
-		text1 = new JButton( "Image 0" );
-		text1.setBorderPainted( false );
-		dialog.add( text1, c );
+		state.text1 = new JButton( "Image 0" );
+		state.text1.setBorderPainted( false );
+		state.dialog.add( state.text1, c );
 
 		c.gridx = 1*2;
 		c.gridy = 0;
 		c.gridwidth = 2*2;
-		sliderImg = new JSlider( 0, imgsA.length - 1 );
-		sliderImg.setValue( 0 );
-		sliderImg.addChangeListener( e -> {
-			setImages( imgsA[ sliderImg.getValue() ], imgsB[ sliderImg.getValue() ], imgsM[ sliderImg.getValue() ] );
-			interpolateMainImage();
-			dialog.setTitle( labelDialog + sliderImg.getValue() );
-			mainImp.setTitle( impDialog + sliderImg.getValue() );
+		state.sliderImg = new JSlider( 0, imgsA.length - 1 );
+		state.sliderImg.setValue( 0 );
+		state.sliderImg.addChangeListener( e -> {
+			setImages( imgsA[ state.sliderImg.getValue() ], imgsB[ state.sliderImg.getValue() ], imgsM[ state.sliderImg.getValue() ] );
+			interpolateMainImage( state );
+			state.dialog.setTitle( state.labelDialog + state.sliderImg.getValue() );
+			mainImp.setTitle( state.impDialog + state.sliderImg.getValue() );
 		});
-		dialog.add( sliderImg, c );
+		state.dialog.add( state.sliderImg, c );
 
 		c.gridx = 3*2;
 		c.gridy = 0;
 		c.gridwidth = 1*2;
-		text2 = new JButton( "Image " + ( imgsA.length - 1 ) );
-		text2.setBorderPainted( false );
-		dialog.add( text2, c );
+		state.text2 = new JButton( "Image " + ( imgsA.length - 1 ) );
+		state.text2.setBorderPainted( false );
+		state.dialog.add( state.text2, c );
 
 		// GRID Y=1
 		c.gridx = 0;
 		c.gridy = 1;
 		c.gridwidth = 1*2;
-		text3 = new JButton( "Mask 0.0" );
-		text3.setBorderPainted( false );
-		text3.setForeground( color );
-		text3.addActionListener( e ->
+		state.text3 = new JButton( "Mask 0.0" );
+		state.text3.setBorderPainted( false );
+		state.text3.setForeground( color );
+		state.text3.addActionListener( e ->
 		{
-			setColor( JColorChooser.showDialog( dialog, "Choose a color", color ) );
-			text3.setForeground( color );
-			text4.setForeground( color );
-			interpolateMainImage();
+			setColor( JColorChooser.showDialog( state.dialog, "Choose a color", color ) );
+			state.text3.setForeground( color );
+			state.text4.setForeground( color );
+			interpolateMainImage( state );
 		} );
-		dialog.add( text3, c );
+		state.dialog.add( state.text3, c );
 
 		c.gridx = 1*2;
 		c.gridy = 1;
 		c.gridwidth = 2*2;
-		sliderMask = new JSlider( 0, 100 );
-		sliderMask.setValue( defaultMask );
-		sliderMask.addChangeListener( e -> interpolateMainImage() );
-		dialog.add( sliderMask, c );
+		state.sliderMask = new JSlider( 0, 100 );
+		state.sliderMask.setValue( defaultMask );
+		state.sliderMask.addChangeListener( e -> interpolateMainImage( state ) );
+		state.dialog.add( state.sliderMask, c );
 
 		c.gridx = 3*2;
 		c.gridy = 1;
 		c.gridwidth = 1*2;
-		text4 = new JButton( "Mask 1.0" );
-		text4.setBorderPainted( false );
-		text4.setForeground( color );
-		text4.addActionListener( e ->
+		state.text4 = new JButton( "Mask 1.0" );
+		state.text4.setBorderPainted( false );
+		state.text4.setForeground( color );
+		state.text4.addActionListener( e ->
 		{
-			setColor( JColorChooser.showDialog( dialog, "Choose a color", color ) );
-			text3.setForeground( color );
-			text4.setForeground( color );
-			interpolateMainImage();
+			setColor( JColorChooser.showDialog(state. dialog, "Choose a color", color ) );
+			state.text3.setForeground( color );
+			state.text4.setForeground( color );
+			interpolateMainImage( state );
 		} );
-		dialog.add( text4, c );
+		state.dialog.add( state.text4, c );
 
 		// GRID Y=2
 		c.gridx = 0;
 		c.gridy = 2;
 		c.gridwidth = 1*2;
-		back = new JButton( "Prev. Img" );
-		back.addActionListener( e -> sliderImg.setValue( sliderImg.getValue() - 1) ) ;
-		dialog.add( back, c );
+		state.back = new JButton( "Prev. Img" );
+		state.back.addActionListener( e -> state.sliderImg.setValue( state.sliderImg.getValue() - 1) ) ;
+		state.dialog.add( state.back, c );
 
 		c.gridx = 1*2;
 		c.gridy = 2;
 		c.gridwidth = 1*2;
-		forward = new JButton( "Next Img" );
-		forward.addActionListener( e -> sliderImg.setValue( sliderImg.getValue() + 1) ) ;
-		dialog.add( forward, c );
+		state.forward = new JButton( "Next Img" );
+		state.forward.addActionListener( e -> state.sliderImg.setValue( state.sliderImg.getValue() + 1) ) ;
+		state.dialog.add( state.forward, c );
 
 		c.gridx = 2*2;
 		c.gridy = 2;
 		c.gridwidth = 1*2;
-		save = new JButton( "Save" );
-		save.addActionListener( e -> save() );
-		dialog.add( save, c );
+		state.save = new JButton( "Save" );
+		state.save.addActionListener( e -> state.save( dir ) );
+		state.dialog.add( state.save, c );
 
 		c.gridx = 3*2;
 		c.gridy = 2;
 		c.gridwidth = 1*2;
-		quit = new JButton( "Quit" );
-		quit.addActionListener( e ->
+		state.quit = new JButton( "Quit" );
+		state.quit.addActionListener( e ->
 		{
-			final int choice = JOptionPane.showConfirmDialog( dialog,
+			final int choice = JOptionPane.showConfirmDialog( state.dialog,
 					"Do you want to save before closing?",
 					"Confirmation",
 					JOptionPane.YES_NO_CANCEL_OPTION );
@@ -467,18 +534,20 @@ public class MLTool implements Command, PlugIn
 			if ( choice == JOptionPane.CANCEL_OPTION )
 				return;
 			else if ( choice == JOptionPane.YES_OPTION )
-				if ( !save() )
+				if ( !state.save( dir ) )
 					return;
 
 			sliceObserver.unregister();
 			mainImp.close();
-			dialog.dispose();
+			state.dialog.dispose();
 		});
-		dialog.add( quit, c );
+		state.dialog.add( state.quit, c );
 
 		// GRID Y=3
-		if ( json == null || json.trim().length() == 0 )
+		if ( phase1 )
 		{
+			final GUIStatePhase1 state1 = (GUIStatePhase1)state;
+
 			c.fill = GridBagConstraints.HORIZONTAL;
 			c.gridx = 0;
 			c.gridy = 3;
@@ -486,79 +555,71 @@ public class MLTool implements Command, PlugIn
 			c.gridheight = 2;
 			c.ipady = 200;
 			c.ipadx = 300;
-			textfield = new JTextArea();
-			dialog.add( new JScrollPane(textfield), c );
+			state1.textfield = new JTextArea();
+			state.dialog.add( new JScrollPane(state1.textfield), c );
 	
 			// try loading an existing notes file
 			if ( loadExisting )
-				load();
+				state1.load( dir );
 		}
 		else
 		{
-			final List<Feature> featureList = loadJSON( json );
-
-			if ( featureList == null )
-			{
-				IJ.log( "failed to load json: " + json );
-				return;
-			}
-
-			IJ.log( "Loaded " + featureList.size() + " features from json ... ");
+			final GUIStatePhase2 state2 = (GUIStatePhase2)state;
 
 			final JPopupMenu popupMenu3 = new JPopupMenu();
 			final JMenuItem item3 = new JMenuItem( "Next image without annotations" );
 			final JMenuItem item4 = new JMenuItem( "Next image marked as invalid" );
-			item3.addActionListener( e -> {});
-			item4.addActionListener( e -> {});
+			item3.addActionListener( e -> {}); // TODO
+			item4.addActionListener( e -> {}); // TODO
 			popupMenu3.add( item3 );
 			popupMenu3.add( item4 );
-			forward.setComponentPopupMenu( popupMenu3 );
+			state2.forward.setComponentPopupMenu( popupMenu3 );
 
 			final JPopupMenu popupMenu4 = new JPopupMenu();
 			final JMenuItem item5 = new JMenuItem( "Previous image without annotations" );
 			final JMenuItem item6 = new JMenuItem( "Previous image marked as invalid" );
-			item5.addActionListener( e -> {});
-			item6.addActionListener( e -> {});
+			item5.addActionListener( e -> {}); // TODO
+			item6.addActionListener( e -> {}); // TODO
 			popupMenu4.add( item5 );
 			popupMenu4.add( item6 );
-			back.setComponentPopupMenu( popupMenu4 );
+			state2.back.setComponentPopupMenu( popupMenu4 );
 
 			c.gridx = 0;
 			c.gridy = 3;
 			c.gridwidth = 4*2;
 			c.gridheight = 1;
-			final JLabel featureLabel = new JLabel( "Feature 1/" + featureList.size() + ": " + featureList.get( 0 ).name, SwingConstants.CENTER );
+			final JLabel featureLabel = new JLabel( "Feature 1/" + state2.featureList.size() + ": " + state2.featureList.get( 0 ).name, SwingConstants.CENTER );
 			featureLabel.setBackground( new Color( 255, 128, 128 ) );
 			featureLabel.setOpaque(true);
 			featureLabel.setBorder( BorderFactory.createLineBorder(Color.BLACK, 1) );
-			dialog.add( featureLabel, c );
+			state2.dialog.add( featureLabel, c );
 
 			// GRID Y=4
 			c.gridx = 0;
 			c.gridy = 4;
 			c.gridwidth = 4*2;
 			c.gridheight = 1;
-			final JLabel featureDescMinusOne = new JLabel( "-: " + featureList.get( 0 ).minusOne, SwingConstants.CENTER );
+			final JLabel featureDescMinusOne = new JLabel( "-: " + state2.featureList.get( 0 ).minusOne, SwingConstants.CENTER );
 			featureDescMinusOne.setFont( new Font( featureDescMinusOne.getFont().getName(), Font.PLAIN, featureDescMinusOne.getFont().getSize() - 2) );
-			dialog.add( featureDescMinusOne, c );
+			state2.dialog.add( featureDescMinusOne, c );
 
 			// GRID Y=5
 			c.gridx = 0;
 			c.gridy = 5;
 			c.gridwidth = 4*2;
 			c.gridheight = 1;
-			final JLabel featureDescZero = new JLabel( "0: " + featureList.get( 0 ).zero, SwingConstants.CENTER );
+			final JLabel featureDescZero = new JLabel( "0: " + state2.featureList.get( 0 ).zero, SwingConstants.CENTER );
 			featureDescZero.setFont( new Font( featureDescZero.getFont().getName(), Font.PLAIN, featureDescZero.getFont().getSize() - 2) );
-			dialog.add( featureDescZero, c );
+			state2.dialog.add( featureDescZero, c );
 
 			// GRID Y=6
 			c.gridx = 0;
 			c.gridy = 6;
 			c.gridwidth = 4*2;
 			c.gridheight = 1;
-			final JLabel featureDescPlusOne = new JLabel( "+: " + featureList.get( 0 ).plusOne, SwingConstants.CENTER );
+			final JLabel featureDescPlusOne = new JLabel( "+: " + state2.featureList.get( 0 ).plusOne, SwingConstants.CENTER );
 			featureDescPlusOne.setFont( new Font( featureDescPlusOne.getFont().getName(), Font.PLAIN, featureDescPlusOne.getFont().getSize() - 2) );
-			dialog.add( featureDescPlusOne, c );
+			state2.dialog.add( featureDescPlusOne, c );
 
 			// GRID Y=7
 			c.gridx = 0;
@@ -567,7 +628,7 @@ public class MLTool implements Command, PlugIn
 			final JButton buttonMinus1 = new JButton( " - " );
 			buttonMinus1.setFont( buttonMinus1.getFont().deriveFont( Font.BOLD ) );
 			buttonMinus1.setForeground( Color.magenta );
-			dialog.add( buttonMinus1, c );
+			state2.dialog.add( buttonMinus1, c );
 
 			c.gridx = 1;
 			c.gridy = 7;
@@ -575,7 +636,7 @@ public class MLTool implements Command, PlugIn
 			final JButton buttonZero = new JButton( " 0 " );;
 			buttonZero.setFont( buttonMinus1.getFont().deriveFont( Font.BOLD ) );
 			buttonZero.setForeground( Color.magenta );
-			dialog.add( buttonZero, c );
+			state2.dialog.add( buttonZero, c );
 
 			c.gridx = 2;
 			c.gridy = 7;
@@ -583,19 +644,19 @@ public class MLTool implements Command, PlugIn
 			final JButton buttonPlus1 = new JButton( " + " );;
 			buttonPlus1.setFont( buttonMinus1.getFont().deriveFont( Font.BOLD ) );
 			buttonPlus1.setForeground( Color.magenta );
-			dialog.add( buttonPlus1, c );
+			state2.dialog.add( buttonPlus1, c );
 
 			c.gridx = 3;
 			c.gridy = 7;
 			c.gridwidth = 1;
 			final JLabel placeholder1 = new JLabel( "                  " );;
-			dialog.add( placeholder1, c );
+			state2.dialog.add( placeholder1, c );
 
 			c.gridx = 4;
 			c.gridy = 7;
 			c.gridwidth = 1;
 			final JLabel placeholder2 = new JLabel( "                  " );;
-			dialog.add( placeholder2, c );
+			state2.dialog.add( placeholder2, c );
 
 			c.gridx = 5;
 			c.gridy = 7;
@@ -608,7 +669,7 @@ public class MLTool implements Command, PlugIn
 			item1.addActionListener( e -> {});
 			popupMenu1.add( item1 );
 			buttonPrevFeature.setComponentPopupMenu( popupMenu1 );
-			dialog.add( buttonPrevFeature, c );
+			state2.dialog.add( buttonPrevFeature, c );
 
 			c.gridx = 6;
 			c.gridy = 7;
@@ -621,7 +682,7 @@ public class MLTool implements Command, PlugIn
 			item2.addActionListener( e -> {});
 			popupMenu2.add( item2 );
 			buttonNextFeature.setComponentPopupMenu( popupMenu2 );
-			dialog.add( buttonNextFeature, c );
+			state2.dialog.add( buttonNextFeature, c );
 
 			c.gridx = 7;
 			c.gridy = 7;
@@ -629,7 +690,7 @@ public class MLTool implements Command, PlugIn
 			final JButton buttonNextImage = new JButton( " X " );;
 			buttonNextImage.setFont( buttonMinus1.getFont().deriveFont( Font.BOLD ) );
 			buttonNextImage.setForeground( Color.RED );
-			dialog.add( buttonNextImage, c );
+			state2.dialog.add( buttonNextImage, c );
 
 			// GRID Y=8
 			c.gridx = 0;
@@ -639,7 +700,7 @@ public class MLTool implements Command, PlugIn
 			barMinus1.setFont( new Font( "Arial", Font.PLAIN, 6 ) );
 			barMinus1.setBackground( Color.magenta );
 			barMinus1.setOpaque( true );
-			dialog.add( barMinus1, c );
+			state2.dialog.add( barMinus1, c );
 
 			c.gridx = 1;
 			c.gridy = 8;
@@ -648,7 +709,7 @@ public class MLTool implements Command, PlugIn
 			barZero.setFont( new Font( "Arial", Font.PLAIN, 6 ) );
 			barZero.setBackground( Color.magenta );
 			barZero.setOpaque( false );
-			dialog.add( barZero, c );
+			state2.dialog.add( barZero, c );
 
 			c.gridx = 0;
 			c.gridy = 8;
@@ -657,15 +718,15 @@ public class MLTool implements Command, PlugIn
 			barPlus1.setFont( new Font( "Arial", Font.PLAIN, 6 ) );
 			barPlus1.setBackground( Color.magenta );
 			barPlus1.setOpaque( false );
-			dialog.add( barPlus1, c );
+			state2.dialog.add( barPlus1, c );
 		}
 
 		// show dialog
-		dialog.pack();
-		dialog.setVisible(true);
+		state.dialog.pack();
+		state.dialog.setVisible(true);
 
-		System.out.println( back.getSize() );
-		System.out.println( forward.getSize() );
+		System.out.println( state.back.getSize() );
+		System.out.println( state.forward.getSize() );
 
 
 		// setup ImageJ window
@@ -681,7 +742,7 @@ public class MLTool implements Command, PlugIn
 		}
 
 		// create image window
-		this.mainImp = new ImagePlus( impDialog + "0", this.stack );
+		this.mainImp = new ImagePlus( state.impDialog + "0", this.stack );
 
 		// setup calibration for animation
 		final Calibration cal = this.mainImp.getCalibration();
@@ -689,7 +750,7 @@ public class MLTool implements Command, PlugIn
 		cal.loop = true;
 
 		// fill image stack with interpolated image data
-		interpolateMainImage();
+		interpolateMainImage( state );
 
 		// setup overlays, add listener
 		final Overlay ov = new Overlay();
