@@ -1,5 +1,6 @@
 package util;
 
+import java.awt.Color;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
@@ -23,6 +24,9 @@ public class GUIStatePhase2 extends GUIState
 	// the state of the GUI when rating images
 	public enum FeatureState { NEGATIVE, ZERO, POSITIVE, NOT_ASSIGNED, INVALID }
 
+	final static Color incompleteFeatureSet = new Color( 255, 128, 128 );
+	final static Color completeFeatureSet = new Color( 128, 255, 128 );
+
 	public List<Feature> featureList;
 	public int numImages, numFeatures;
 	public final ArrayList< ArrayList< FeatureState > > featuresState = new ArrayList<>();
@@ -30,6 +34,13 @@ public class GUIStatePhase2 extends GUIState
 	JLabel featureLabel, featureDescMinusOne, featureDescZero, featureDescPlusOne;
 	JLabel placeholder1, placeholder2, barMinus1, barZero, barPlus1;
 	JButton buttonMinus1, buttonZero, buttonPlus1, buttonPrevFeature, buttonNextFeature, buttonNextImage;
+
+	int currentFeature = 0;
+
+	public GUIStatePhase2( final MLTool tool )
+	{
+		super( tool );
+	}
 
 	public boolean setup( final int numImages, final String json )
 	{
@@ -58,6 +69,105 @@ public class GUIStatePhase2 extends GUIState
 
 		return true;
 	}
+
+	@Override
+	public void notifyImageChanged()
+	{
+		updateFeature();
+	}
+
+	public void nextFeature()
+	{
+		if ( currentFeature < numFeatures - 1 )
+		{
+			++currentFeature;
+			updateFeature();
+		}
+		else
+		{
+			if ( currentImage() < numImages - 1 )
+			{
+				currentFeature = 0;
+				nextImage();
+			}
+		}
+	}
+
+	public void prevFeature()
+	{
+		if ( currentFeature > 0 )
+		{
+			--currentFeature;
+			updateFeature();
+		}
+		else
+		{
+			if ( currentImage() > 0 )
+			{
+				currentFeature = numFeatures - 1;
+				prevImage();
+			}
+		}
+	}
+
+	public void updateFeature()
+	{
+		featureLabel.setText( featureLabel() );
+		featureDescMinusOne.setText( featureDescMinus1() );
+		featureDescZero.setText( featureDescZero() );
+		featureDescPlusOne.setText( featureDescPlus1() );
+
+		updateFeatureState();
+	}
+
+	public void updateFeatureState()
+	{
+		final FeatureState state = featureState();
+
+		System.out.println( "current image: " + currentImage() + " state=" + state);
+		System.out.println( "feature index: " + currentFeature);
+		System.out.println( "feature state: " + state);
+
+		barMinus1.setBackground( state == FeatureState.NEGATIVE ? Color.magenta : Color.lightGray );
+		barZero.setBackground( state == FeatureState.ZERO ? Color.magenta : Color.lightGray );
+		barPlus1.setBackground( state == FeatureState.POSITIVE ? Color.magenta : Color.lightGray );
+
+		testAndUpdateFeatureComplete();
+	}
+
+	public void setFeatureState( final FeatureState state )
+	{
+		featuresState.get( currentImage() ).set( currentFeature, state );
+		updateFeatureState();
+	}
+
+	public boolean testAndUpdateFeatureComplete()
+	{
+		boolean complete = true;
+
+		for ( int i = 0; i < numFeatures; ++i )
+		{
+			final FeatureState state = featuresState.get( currentImage() ).get( i );
+			if ( state != FeatureState.NEGATIVE && state != FeatureState.ZERO && state != FeatureState.POSITIVE )
+			{
+				complete = false;
+				break;
+			}
+		}
+
+		if ( complete )
+			featureLabel.setBackground( completeFeatureSet );
+		else
+			featureLabel.setBackground( incompleteFeatureSet );
+
+		return complete;
+	}
+	
+	public FeatureState featureState() { return featuresState.get( currentImage() ).get( currentFeature ); }
+	public String featureLabel() { return "Feature " + (currentFeature+1) + "/" + featureList.size() + ": " + featureList.get( currentFeature ).name; }
+	public String featureDescMinus1() { return "-: " + featureList.get( currentFeature ).minusOne; }
+	public String featureDescZero() { return "0: " + featureList.get( currentFeature ).zero; }
+	public String featureDescPlus1() { return "+: " + featureList.get( currentFeature ).plusOne; }
 
 	@Override
 	public boolean save(String dir) {

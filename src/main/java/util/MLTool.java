@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,6 +28,7 @@ import javax.swing.JSlider;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 import org.scijava.command.Command;
 import org.scijava.plugin.Plugin;
@@ -46,6 +49,7 @@ import ij.plugin.Zoom;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import net.imglib2.type.numeric.ARGBType;
+import util.GUIStatePhase2.FeatureState;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Funke lab>Annotator ...")
 public class MLTool implements Command, PlugIn
@@ -222,7 +226,7 @@ public class MLTool implements Command, PlugIn
 		setColor( defaultColor );
 
 		final boolean phase1 = (json == null || json.trim().length() == 0);
-		final GUIState state = ( phase1 ? new GUIStatePhase1() : new GUIStatePhase2() );
+		final GUIState state = ( phase1 ? new GUIStatePhase1( this ) : new GUIStatePhase2( this ) );
 
 		// create dialog
 		state.dialog = new JDialog( (JFrame)null, state.labelDialog + "0", false);
@@ -243,12 +247,7 @@ public class MLTool implements Command, PlugIn
 		c.gridwidth = 2*2;
 		state.sliderImg = new JSlider( 0, imgsA.length - 1 );
 		state.sliderImg.setValue( 0 );
-		state.sliderImg.addChangeListener( e -> {
-			setImages( imgsA[ state.sliderImg.getValue() ], imgsB[ state.sliderImg.getValue() ], imgsM[ state.sliderImg.getValue() ] );
-			interpolateMainImage( state );
-			state.dialog.setTitle( state.labelDialog + state.sliderImg.getValue() );
-			mainImp.setTitle( state.impDialog + state.sliderImg.getValue() );
-		});
+		state.sliderImg.addChangeListener( e -> state.setImage() );
 		state.dialog.add( state.sliderImg, c );
 
 		c.gridx = 3*2;
@@ -302,14 +301,14 @@ public class MLTool implements Command, PlugIn
 		c.gridy = 2;
 		c.gridwidth = 1*2;
 		state.back = new JButton( "Prev. Img" );
-		state.back.addActionListener( e -> state.sliderImg.setValue( state.sliderImg.getValue() - 1) ) ;
+		state.back.addActionListener( e -> state.prevImage() ) ;
 		state.dialog.add( state.back, c );
 
 		c.gridx = 1*2;
 		c.gridy = 2;
 		c.gridwidth = 1*2;
 		state.forward = new JButton( "Next Img" );
-		state.forward.addActionListener( e -> state.sliderImg.setValue( state.sliderImg.getValue() + 1) ) ;
+		state.forward.addActionListener( e -> state.nextImage() ) ;
 		state.dialog.add( state.forward, c );
 
 		c.gridx = 2*2;
@@ -342,11 +341,11 @@ public class MLTool implements Command, PlugIn
 		});
 		state.dialog.add( state.quit, c );
 
-		// GRID Y=3
 		if ( phase1 )
 		{
 			final GUIStatePhase1 state1 = (GUIStatePhase1)state;
 
+			// GRID Y=3
 			c.fill = GridBagConstraints.HORIZONTAL;
 			c.gridx = 0;
 			c.gridy = 3;
@@ -386,22 +385,24 @@ public class MLTool implements Command, PlugIn
 			popupMenu4.add( item6 );
 			state2.back.setComponentPopupMenu( popupMenu4 );
 
+			// GRID Y=3
 			c.gridx = 0;
 			c.gridy = 3;
 			c.gridwidth = 4*2;
 			c.gridheight = 1;
-			state2.featureLabel = new JLabel( "Feature 1/" + state2.featureList.size() + ": " + state2.featureList.get( 0 ).name, SwingConstants.CENTER );
-			state2.featureLabel.setBackground( new Color( 255, 128, 128 ) );
+			state2.featureLabel =
+					new JLabel( state2.featureLabel(), SwingConstants.CENTER );
+			state2.testAndUpdateFeatureComplete();
 			state2.featureLabel.setOpaque(true);
 			state2.featureLabel.setBorder( BorderFactory.createLineBorder(Color.BLACK, 1) );
 			state2.dialog.add( state2.featureLabel, c );
-
+			
 			// GRID Y=4
 			c.gridx = 0;
 			c.gridy = 4;
 			c.gridwidth = 4*2;
 			c.gridheight = 1;
-			state2.featureDescMinusOne = new JLabel( "-: " + state2.featureList.get( 0 ).minusOne, SwingConstants.CENTER );
+			state2.featureDescMinusOne = new JLabel( state2.featureDescMinus1(), SwingConstants.CENTER );
 			state2.featureDescMinusOne.setFont( new Font( state2.featureDescMinusOne.getFont().getName(), Font.PLAIN, state2.featureDescMinusOne.getFont().getSize() - 2) );
 			state2.dialog.add( state2.featureDescMinusOne, c );
 
@@ -410,7 +411,7 @@ public class MLTool implements Command, PlugIn
 			c.gridy = 5;
 			c.gridwidth = 4*2;
 			c.gridheight = 1;
-			state2.featureDescZero = new JLabel( "0: " + state2.featureList.get( 0 ).zero, SwingConstants.CENTER );
+			state2.featureDescZero = new JLabel( state2.featureDescZero(), SwingConstants.CENTER );
 			state2.featureDescZero.setFont( new Font( state2.featureDescZero.getFont().getName(), Font.PLAIN, state2.featureDescZero.getFont().getSize() - 2) );
 			state2.dialog.add( state2.featureDescZero, c );
 
@@ -419,7 +420,7 @@ public class MLTool implements Command, PlugIn
 			c.gridy = 6;
 			c.gridwidth = 4*2;
 			c.gridheight = 1;
-			state2.featureDescPlusOne = new JLabel( "+: " + state2.featureList.get( 0 ).plusOne, SwingConstants.CENTER );
+			state2.featureDescPlusOne = new JLabel(  state2.featureDescPlus1(), SwingConstants.CENTER );
 			state2.featureDescPlusOne.setFont( new Font( state2.featureDescPlusOne.getFont().getName(), Font.PLAIN, state2.featureDescPlusOne.getFont().getSize() - 2) );
 			state2.dialog.add( state2.featureDescPlusOne, c );
 
@@ -430,6 +431,7 @@ public class MLTool implements Command, PlugIn
 			state2.buttonMinus1 = new JButton( " - " );
 			state2.buttonMinus1.setFont( state2.buttonMinus1.getFont().deriveFont( Font.BOLD ) );
 			state2.buttonMinus1.setForeground( Color.magenta );
+			state2.buttonMinus1.addActionListener( e -> state2.setFeatureState( FeatureState.NEGATIVE ) );
 			state2.dialog.add( state2.buttonMinus1, c );
 
 			c.gridx = 1;
@@ -438,6 +440,7 @@ public class MLTool implements Command, PlugIn
 			state2.buttonZero = new JButton( " 0 " );;
 			state2.buttonZero.setFont( state2.buttonMinus1.getFont().deriveFont( Font.BOLD ) );
 			state2.buttonZero.setForeground( Color.magenta );
+			state2.buttonZero.addActionListener( e -> state2.setFeatureState( FeatureState.ZERO ) );
 			state2.dialog.add( state2.buttonZero, c );
 
 			c.gridx = 2;
@@ -446,6 +449,7 @@ public class MLTool implements Command, PlugIn
 			state2.buttonPlus1 = new JButton( " + " );;
 			state2.buttonPlus1.setFont( state2.buttonMinus1.getFont().deriveFont( Font.BOLD ) );
 			state2.buttonPlus1.setForeground( Color.magenta );
+			state2.buttonPlus1.addActionListener( e -> state2.setFeatureState( FeatureState.POSITIVE ) );
 			state2.dialog.add( state2.buttonPlus1, c );
 
 			c.gridx = 3;
@@ -468,7 +472,7 @@ public class MLTool implements Command, PlugIn
 			state2.buttonPrevFeature.setForeground( Color.GREEN.darker().darker().darker() );
 			final JPopupMenu popupMenu1 = new JPopupMenu();
 			final JMenuItem item1 = new JMenuItem( "Previous un-annotated feature" );
-			item1.addActionListener( e -> {});
+			state2.buttonPrevFeature.addActionListener( e -> state2.prevFeature() );
 			popupMenu1.add( item1 );
 			state2.buttonPrevFeature.setComponentPopupMenu( popupMenu1 );
 			state2.dialog.add( state2.buttonPrevFeature, c );
@@ -481,7 +485,7 @@ public class MLTool implements Command, PlugIn
 			state2.buttonNextFeature.setForeground( Color.GREEN.darker().darker().darker() );
 			final JPopupMenu popupMenu2 = new JPopupMenu();
 			final JMenuItem item2 = new JMenuItem( "Next un-annotated feature" );
-			item2.addActionListener( e -> {});
+			state2.buttonNextFeature.addActionListener( e -> state2.nextFeature() );
 			popupMenu2.add( item2 );
 			state2.buttonNextFeature.setComponentPopupMenu( popupMenu2 );
 			state2.dialog.add( state2.buttonNextFeature, c );
@@ -500,7 +504,7 @@ public class MLTool implements Command, PlugIn
 			c.gridwidth = 1;
 			state2.barMinus1 = new JLabel("     ");
 			state2.barMinus1.setFont( new Font( "Arial", Font.PLAIN, 6 ) );
-			state2.barMinus1.setBackground( Color.magenta );
+			state2.barMinus1.setBackground( Color.lightGray );
 			state2.barMinus1.setOpaque( true );
 			state2.dialog.add( state2.barMinus1, c );
 
@@ -509,17 +513,17 @@ public class MLTool implements Command, PlugIn
 			c.gridwidth = 1;
 			state2.barZero = new JLabel("     ");
 			state2.barZero.setFont( new Font( "Arial", Font.PLAIN, 6 ) );
-			state2.barZero.setBackground( Color.magenta );
-			state2.barZero.setOpaque( false );
+			state2.barZero.setBackground( Color.lightGray );
+			state2.barZero.setOpaque( true );
 			state2.dialog.add( state2.barZero, c );
 
-			c.gridx = 0;
+			c.gridx = 2;
 			c.gridy = 8;
 			c.gridwidth = 1;
 			state2.barPlus1 = new JLabel("     ");
 			state2.barPlus1.setFont( new Font( "Arial", Font.PLAIN, 6 ) );
-			state2.barPlus1.setBackground( Color.magenta );
-			state2.barPlus1.setOpaque( false );
+			state2.barPlus1.setBackground( Color.lightGray );
+			state2.barPlus1.setOpaque( true );
 			state2.dialog.add( state2.barPlus1, c );
 		}
 
@@ -604,7 +608,7 @@ public class MLTool implements Command, PlugIn
 
 		gd.addDirectoryField("Directory", defaultDirectory, 80 );
 		gd.addFileField( "Annotation JSON", defaultJSON, 80 );
-		gd.addCheckbox( "Load existing notes (only relevant if no JSON is specified)", defaultLoadExisting);
+		gd.addCheckbox( "Load existing state (notes/selections)", defaultLoadExisting);
 
 		gd.showDialog();
 		if ( gd.wasCanceled() )

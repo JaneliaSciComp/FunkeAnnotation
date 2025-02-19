@@ -16,6 +16,11 @@ public class GUIStatePhase1 extends GUIState
 	public static final String notes = "notes.txt";
 	public JTextArea textfield;
 
+	public GUIStatePhase1( final MLTool tool )
+	{
+		super( tool );
+	}
+
 	@Override
 	public boolean load( final String dir )
 	{
@@ -73,4 +78,7 @@ public class GUIStatePhase1 extends GUIState
 
 		return true;
 	}
+
+	@Override
+	public void notifyImageChanged() {}
 }
