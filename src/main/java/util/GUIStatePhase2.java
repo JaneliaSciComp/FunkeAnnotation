@@ -26,6 +26,7 @@ public class GUIStatePhase2 extends GUIState
 
 	final static Color incompleteFeatureSet = new Color( 255, 128, 128 );
 	final static Color completeFeatureSet = new Color( 128, 255, 128 );
+	final static Color invalidFeatureSet = new Color( 128, 128, 128 );
 
 	public List<Feature> featureList;
 	public int numImages, numFeatures;
@@ -135,6 +136,15 @@ public class GUIStatePhase2 extends GUIState
 		testAndUpdateFeatureComplete();
 	}
 
+	public void setAllFeatureStatesInvalid()
+	{
+		for ( int i = 0; i < numFeatures; ++i )
+			featuresState.get( currentImage() ).set( i, FeatureState.INVALID );
+
+		currentFeature = 0;
+		nextImage();
+	}
+
 	public void setFeatureState( final FeatureState state )
 	{
 		featuresState.get( currentImage() ).set( currentFeature, state );
@@ -144,18 +154,22 @@ public class GUIStatePhase2 extends GUIState
 	public boolean testAndUpdateFeatureComplete()
 	{
 		boolean complete = true;
+		boolean invalid = false;
 
 		for ( int i = 0; i < numFeatures; ++i )
 		{
 			final FeatureState state = featuresState.get( currentImage() ).get( i );
+
+			if ( state == FeatureState.INVALID )
+				invalid = true;
+
 			if ( state != FeatureState.NEGATIVE && state != FeatureState.ZERO && state != FeatureState.POSITIVE )
-			{
 				complete = false;
-				break;
-			}
 		}
 
-		if ( complete )
+		if ( invalid )
+			featureLabel.setBackground( invalidFeatureSet );
+		else if ( complete )
 			featureLabel.setBackground( completeFeatureSet );
 		else
 			featureLabel.setBackground( incompleteFeatureSet );

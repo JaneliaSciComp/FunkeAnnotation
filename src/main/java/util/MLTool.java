@@ -496,6 +496,7 @@ public class MLTool implements Command, PlugIn
 			state2.buttonNextImage = new JButton( " X " );;
 			state2.buttonNextImage.setFont( state2.buttonMinus1.getFont().deriveFont( Font.BOLD ) );
 			state2.buttonNextImage.setForeground( Color.RED );
+			state2.buttonNextImage.addActionListener( e -> state2.setAllFeatureStatesInvalid());
 			state2.dialog.add( state2.buttonNextImage, c );
 
 			// GRID Y=8
