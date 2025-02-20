@@ -77,6 +77,46 @@ public class GUIStatePhase2 extends GUIState
 		updateFeature();
 	}
 
+	public boolean nextAnnotatedFeature()
+	{
+		for ( int i = currentImage(); i < numImages; ++i )
+			for ( int f = currentFeature; f < numFeatures; ++f )
+				if ( featuresState.get( i ).get( f ) == FeatureState.NOT_ASSIGNED )
+				{
+					// found it
+					currentFeature = f;
+
+					if ( i != currentImage() )
+						sliderImg.setValue( i );
+					else
+						updateFeature();
+
+					return true;
+				}
+
+		return false;
+	}
+
+	public boolean prevAnnotatedFeature()
+	{
+		for ( int i = currentImage(); i >= 0; --i )
+			for ( int f = currentFeature; f >= 0; --f )
+				if ( featuresState.get( i ).get( f ) == FeatureState.NOT_ASSIGNED )
+				{
+					// found it
+					currentFeature = f;
+
+					if ( i != currentImage() )
+						sliderImg.setValue( i );
+					else
+						updateFeature();
+
+					return true;
+				}
+
+		return false;
+	}
+
 	public void nextFeature()
 	{
 		if ( currentFeature < numFeatures - 1 )
@@ -125,9 +165,9 @@ public class GUIStatePhase2 extends GUIState
 	{
 		final FeatureState state = featureState();
 
-		System.out.println( "current image: " + currentImage() + " state=" + state);
-		System.out.println( "feature index: " + currentFeature);
-		System.out.println( "feature state: " + state);
+		//System.out.println( "current image: " + currentImage() + " state=" + state);
+		//System.out.println( "feature index: " + currentFeature);
+		//System.out.println( "feature state: " + state);
 
 		barMinus1.setBackground( state == FeatureState.NEGATIVE ? Color.magenta : Color.lightGray );
 		barZero.setBackground( state == FeatureState.ZERO ? Color.magenta : Color.lightGray );

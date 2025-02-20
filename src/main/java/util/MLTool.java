@@ -473,10 +473,11 @@ public class MLTool implements Command, PlugIn
 			state2.buttonPrevFeature = new JButton( " -F " );;
 			state2.buttonPrevFeature.setFont( state2.buttonMinus1.getFont().deriveFont( Font.BOLD ) );
 			state2.buttonPrevFeature.setForeground( Color.GREEN.darker().darker().darker() );
+			state2.buttonPrevFeature.addActionListener( e -> state2.prevFeature() );
 			final JPopupMenu popupMenu1 = new JPopupMenu();
 			final JMenuItem item1 = new JMenuItem( "Previous un-annotated feature" );
-			state2.buttonPrevFeature.addActionListener( e -> state2.prevFeature() );
 			popupMenu1.add( item1 );
+			item1.addActionListener( e -> state2.prevAnnotatedFeature() );
 			state2.buttonPrevFeature.setComponentPopupMenu( popupMenu1 );
 			state2.dialog.add( state2.buttonPrevFeature, c );
 
@@ -486,9 +487,10 @@ public class MLTool implements Command, PlugIn
 			state2.buttonNextFeature = new JButton( " +F " );;
 			state2.buttonNextFeature.setFont( state2.buttonMinus1.getFont().deriveFont( Font.BOLD ) );
 			state2.buttonNextFeature.setForeground( Color.GREEN.darker().darker().darker() );
+			state2.buttonNextFeature.addActionListener( e -> state2.nextFeature() );
 			final JPopupMenu popupMenu2 = new JPopupMenu();
 			final JMenuItem item2 = new JMenuItem( "Next un-annotated feature" );
-			state2.buttonNextFeature.addActionListener( e -> state2.nextFeature() );
+			item2.addActionListener( e -> state2.nextAnnotatedFeature() ); // TODO
 			popupMenu2.add( item2 );
 			state2.buttonNextFeature.setComponentPopupMenu( popupMenu2 );
 			state2.dialog.add( state2.buttonNextFeature, c );

@@ -27,16 +27,14 @@ public abstract class GUIState
 
 	public void prevImage() { sliderImg.setValue( sliderImg.getValue() - 1); }
 
-	public void setImage() { setImage( currentImage() ); }
-
-	public void setImage( final int imageIndex )
+	public void setImage()
 	{
-		final int currentImage = currentImage();
+		final int imageIndex = currentImage();
 
-		tool.setImages( tool.imgsA[ currentImage ], tool.imgsB[ currentImage ], tool.imgsM[ currentImage ] );
+		tool.setImages( tool.imgsA[ imageIndex ], tool.imgsB[ imageIndex ], tool.imgsM[ imageIndex ] );
 		tool.interpolateMainImage( this );
-		dialog.setTitle( labelDialog + currentImage );
-		tool.mainImp.setTitle( impDialog + currentImage );
+		dialog.setTitle( labelDialog + imageIndex );
+		tool.mainImp.setTitle( impDialog + imageIndex );
 
 		notifyImageChanged();
 	}
