@@ -1,9 +1,12 @@
 package util;
 
+import java.awt.AWTEvent;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Toolkit;
+import java.awt.event.AWTEventListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
@@ -526,14 +529,35 @@ public class MLTool implements Command, PlugIn
 			state2.barPlus1.setBackground( Color.lightGray );
 			state2.barPlus1.setOpaque( true );
 			state2.dialog.add( state2.barPlus1, c );
+
+			// global key listener
+			long eventMask = AWTEvent.KEY_EVENT_MASK;
+
+			Toolkit.getDefaultToolkit().addAWTEventListener(e ->
+			{
+				if ( e.getID() == KeyEvent.KEY_PRESSED )
+				{
+					final KeyEvent ke = (KeyEvent)e;
+
+					if ( ke.getKeyChar() == 'a' )
+						state2.setFeatureState( FeatureState.NEGATIVE );
+					else if ( ke.getKeyChar() == 's' )
+						state2.setFeatureState( FeatureState.ZERO );
+					else if ( ke.getKeyChar() == 'd' )
+						state2.setFeatureState( FeatureState.POSITIVE );
+					else if ( ke.getKeyChar() == '>' )
+						state2.nextFeature();
+					else if ( ke.getKeyChar() == '<' )
+						state2.prevFeature();
+					else if ( ke.getKeyChar() == 'X' )
+						state2.setAllFeatureStatesInvalid();
+				}
+			}, eventMask);
 		}
 
 		// show dialog
 		state.dialog.pack();
 		state.dialog.setVisible(true);
-
-		System.out.println( state.back.getSize() );
-		System.out.println( state.forward.getSize() );
 
 
 		// setup ImageJ window
@@ -596,6 +620,8 @@ public class MLTool implements Command, PlugIn
 			// start animation
 			new Animator().run( "start" );
 		}).start();
+
+		state.dialog.requestFocus();
 	}
 
 	public static String defaultDirectory = "";
