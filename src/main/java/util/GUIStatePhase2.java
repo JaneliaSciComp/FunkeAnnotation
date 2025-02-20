@@ -80,7 +80,7 @@ public class GUIStatePhase2 extends GUIState
 	public boolean nextAnnotatedFeature()
 	{
 		for ( int i = currentImage(); i < numImages; ++i )
-			for ( int f = currentFeature; f < numFeatures; ++f )
+			for ( int f = currentFeature + 1; f < numFeatures; ++f )
 				if ( featuresState.get( i ).get( f ) == FeatureState.NOT_ASSIGNED )
 				{
 					// found it
@@ -100,7 +100,7 @@ public class GUIStatePhase2 extends GUIState
 	public boolean prevAnnotatedFeature()
 	{
 		for ( int i = currentImage(); i >= 0; --i )
-			for ( int f = currentFeature; f >= 0; --f )
+			for ( int f = currentFeature - 1; f >= 0; --f )
 				if ( featuresState.get( i ).get( f ) == FeatureState.NOT_ASSIGNED )
 				{
 					// found it
