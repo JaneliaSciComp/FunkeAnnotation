@@ -1,8 +1,11 @@
 package util;
 
 import java.awt.Color;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +30,8 @@ public class GUIStatePhase2 extends GUIState
 	final static Color incompleteFeatureSet = new Color( 255, 128, 128 );
 	final static Color completeFeatureSet = new Color( 128, 255, 128 );
 	final static Color invalidFeatureSet = new Color( 128, 128, 128 );
+
+	final static String csv = "results.csv";
 
 	public List<Feature> featureList;
 	public int numImages, numFeatures;
@@ -256,9 +261,50 @@ public class GUIStatePhase2 extends GUIState
 	public String featureDescPlus1() { return "+: " + featureList.get( currentFeature ).plusOne; }
 
 	@Override
-	public boolean save(String dir) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean save( final String dir )
+	{
+		final String fn = new File( dir, csv ).getAbsolutePath();
+
+		IJ.log( "Saving '" + fn + "' ... " );
+
+		final String[] row = new String[ 1 + featureList.size() ];
+
+		try ( final FileWriter writer = new FileWriter( fn ))
+		{
+			final String[] header = new String[ 1 + featureList.size() ];
+			header[ 0 ] = "image_id";
+
+			for ( int i = 0; i < featureList.size(); ++i )
+				header[ i + 1 ] = featureList.get( i ).name;
+
+			// Write header
+			writer.append( String.join(",", header) );
+			writer.append( "\n" );
+
+			// Write data rows
+			for ( int i = 0; i < featuresState.size(); ++i )
+			{
+				final ArrayList<FeatureState> data = featuresState.get( i );
+
+				row[ 0 ] = Integer.toString( i );
+
+				for ( int j = 0; j < featureList.size(); ++j )
+					row[ j + 1 ] = Integer.toString( data.get( j ).ordinal() - 1 ); // -1 so 0 is represented as -1 in the file
+
+				writer.append( String.join( ",", row ) );
+				writer.append( "\n" );
+			}
+		}
+		catch (IOException e)
+		{
+			IJ.log( "Failed to write CSV: " + e );
+			e.printStackTrace();
+			return false;
+		}
+
+		IJ.log( "Saved '" + fn + "'." );
+
+		return true;
 	}
 
 	@Override
