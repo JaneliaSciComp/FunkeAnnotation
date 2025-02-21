@@ -373,8 +373,8 @@ public class MLTool implements Command, PlugIn
 			final JPopupMenu popupMenu3 = new JPopupMenu();
 			final JMenuItem item3 = new JMenuItem( "Next image without annotations" );
 			final JMenuItem item4 = new JMenuItem( "Next image marked as invalid" );
-			item3.addActionListener( e -> {}); // TODO
-			item4.addActionListener( e -> {}); // TODO
+			item3.addActionListener( e -> state2.nextImageWithFeature( FeatureState.NOT_ASSIGNED ) );
+			item4.addActionListener( e -> state2.nextImageWithFeature( FeatureState.INVALID ) );
 			popupMenu3.add( item3 );
 			popupMenu3.add( item4 );
 			state2.forward.setComponentPopupMenu( popupMenu3 );
@@ -382,8 +382,8 @@ public class MLTool implements Command, PlugIn
 			final JPopupMenu popupMenu4 = new JPopupMenu();
 			final JMenuItem item5 = new JMenuItem( "Previous image without annotations" );
 			final JMenuItem item6 = new JMenuItem( "Previous image marked as invalid" );
-			item5.addActionListener( e -> {}); // TODO
-			item6.addActionListener( e -> {}); // TODO
+			item5.addActionListener( e -> state2.prevImageWithFeature( FeatureState.NOT_ASSIGNED ) );
+			item6.addActionListener( e -> state2.prevImageWithFeature( FeatureState.INVALID ) );
 			popupMenu4.add( item5 );
 			popupMenu4.add( item6 );
 			state2.back.setComponentPopupMenu( popupMenu4 );
@@ -477,7 +477,7 @@ public class MLTool implements Command, PlugIn
 			final JPopupMenu popupMenu1 = new JPopupMenu();
 			final JMenuItem item1 = new JMenuItem( "Previous un-annotated feature" );
 			popupMenu1.add( item1 );
-			item1.addActionListener( e -> state2.prevAnnotatedFeature() );
+			item1.addActionListener( e -> state2.prevUnannotatedFeature() );
 			state2.buttonPrevFeature.setComponentPopupMenu( popupMenu1 );
 			state2.dialog.add( state2.buttonPrevFeature, c );
 
@@ -490,7 +490,7 @@ public class MLTool implements Command, PlugIn
 			state2.buttonNextFeature.addActionListener( e -> state2.nextFeature() );
 			final JPopupMenu popupMenu2 = new JPopupMenu();
 			final JMenuItem item2 = new JMenuItem( "Next un-annotated feature" );
-			item2.addActionListener( e -> state2.nextAnnotatedFeature() ); // TODO
+			item2.addActionListener( e -> state2.nextUnannotatedFeature() );
 			popupMenu2.add( item2 );
 			state2.buttonNextFeature.setComponentPopupMenu( popupMenu2 );
 			state2.dialog.add( state2.buttonNextFeature, c );

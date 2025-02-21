@@ -77,7 +77,39 @@ public class GUIStatePhase2 extends GUIState
 		updateFeature();
 	}
 
-	public boolean nextAnnotatedFeature()
+	public boolean nextImageWithFeature( final FeatureState state )
+	{
+		for ( int i = currentImage() + 1; i < numImages; ++i )
+			for ( int f = 0; f < numFeatures; ++f )
+				if ( featuresState.get( i ).get( f ) == state )
+				{
+					// found it
+					currentFeature = 0;
+					sliderImg.setValue( i );
+
+					return true;
+				}
+
+		return false;
+	}
+
+	public boolean prevImageWithFeature( final FeatureState state )
+	{
+		for ( int i = currentImage() - 1; i >= 0; --i )
+			for ( int f = numFeatures - 1; f >= 0; --f )
+				if ( featuresState.get( i ).get( f ) == state )
+				{
+					// found it
+					currentFeature = 0;
+					sliderImg.setValue( i );
+
+					return true;
+				}
+
+		return false;
+	}
+
+	public boolean nextUnannotatedFeature()
 	{
 		for ( int i = currentImage(); i < numImages; ++i )
 			for ( int f = currentFeature + 1; f < numFeatures; ++f )
@@ -97,7 +129,7 @@ public class GUIStatePhase2 extends GUIState
 		return false;
 	}
 
-	public boolean prevAnnotatedFeature()
+	public boolean prevUnannotatedFeature()
 	{
 		for ( int i = currentImage(); i >= 0; --i )
 			for ( int f = currentFeature - 1; f >= 0; --f )
