@@ -370,6 +370,10 @@ public class MLTool implements Command, PlugIn
 			if ( !state2.setup( imgsA.length, json ) )
 				return;
 
+			// try loading an existing CSV file with the state
+			if ( loadExisting )
+				state2.load( dir );
+
 			final JPopupMenu popupMenu3 = new JPopupMenu();
 			final JMenuItem item3 = new JMenuItem( "Next image without annotations" );
 			final JMenuItem item4 = new JMenuItem( "Next image marked as invalid" );

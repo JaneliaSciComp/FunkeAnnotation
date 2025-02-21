@@ -1,6 +1,7 @@
 package util;
 
 import java.awt.Color;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -27,11 +28,12 @@ public class GUIStatePhase2 extends GUIState
 	// the state of the GUI when rating images
 	public enum FeatureState { NEGATIVE, ZERO, POSITIVE, NOT_ASSIGNED, INVALID }
 
-	final static Color incompleteFeatureSet = new Color( 255, 128, 128 );
-	final static Color completeFeatureSet = new Color( 128, 255, 128 );
-	final static Color invalidFeatureSet = new Color( 128, 128, 128 );
+	static Color incompleteFeatureSet = new Color( 255, 128, 128 );
+	static Color completeFeatureSet = new Color( 128, 255, 128 );
+	static Color invalidFeatureSet = new Color( 128, 128, 128 );
 
-	final static String csv = "results.csv";
+	static String csv = "results.csv";
+	static String csvSplitBy = ",";
 
 	public List<Feature> featureList;
 	public int numImages, numFeatures;
@@ -116,8 +118,16 @@ public class GUIStatePhase2 extends GUIState
 
 	public boolean nextUnannotatedFeature()
 	{
+		//System.out.println();
+		int startFeature = currentFeature + 1;
+
 		for ( int i = currentImage(); i < numImages; ++i )
-			for ( int f = currentFeature + 1; f < numFeatures; ++f )
+		{
+			// only on the current image start one further, then start at 0
+			for ( int f = startFeature; f < numFeatures; ++f )
+			{
+				//System.out.println( i+","+f+": " + featuresState.get( i ).get( f ) );
+
 				if ( featuresState.get( i ).get( f ) == FeatureState.NOT_ASSIGNED )
 				{
 					// found it
@@ -130,14 +140,23 @@ public class GUIStatePhase2 extends GUIState
 
 					return true;
 				}
+			}
+
+			startFeature = 0;
+		}
 
 		return false;
 	}
 
 	public boolean prevUnannotatedFeature()
 	{
+		int startFeature = currentFeature - 1;
+
 		for ( int i = currentImage(); i >= 0; --i )
-			for ( int f = currentFeature - 1; f >= 0; --f )
+		{
+			// only on the current image start one feature down from the current one, then start at the highest
+			for ( int f = startFeature; f >= 0; --f )
+			{
 				if ( featuresState.get( i ).get( f ) == FeatureState.NOT_ASSIGNED )
 				{
 					// found it
@@ -150,6 +169,10 @@ public class GUIStatePhase2 extends GUIState
 
 					return true;
 				}
+			}
+
+			startFeature = numFeatures - 1;
+		}
 
 		return false;
 	}
@@ -278,7 +301,7 @@ public class GUIStatePhase2 extends GUIState
 				header[ i + 1 ] = featureList.get( i ).name;
 
 			// Write header
-			writer.append( String.join(",", header) );
+			writer.append( String.join( csvSplitBy, header) );
 			writer.append( "\n" );
 
 			// Write data rows
@@ -291,7 +314,7 @@ public class GUIStatePhase2 extends GUIState
 				for ( int j = 0; j < featureList.size(); ++j )
 					row[ j + 1 ] = Integer.toString( data.get( j ).ordinal() - 1 ); // -1 so 0 is represented as -1 in the file
 
-				writer.append( String.join( ",", row ) );
+				writer.append( String.join( csvSplitBy, row ) );
 				writer.append( "\n" );
 			}
 		}
@@ -308,9 +331,66 @@ public class GUIStatePhase2 extends GUIState
 	}
 
 	@Override
-	public boolean load(String dir) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean load( final String dir )
+	{
+		final File file = new File( dir, csv );
+
+		IJ.log( "Loading '" + file.getAbsolutePath() + "' ..." );
+
+		if ( !file.exists() )
+		{
+			IJ.log( "File '" + file.getAbsolutePath() + "' does not exist, cannot load." );
+			return false;
+		}
+
+		String line;
+
+		try ( final BufferedReader br = new BufferedReader(new FileReader(file)))
+		{
+			int lineIndex = 0;
+
+			while ((line = br.readLine()) != null)
+			{
+				final String[] dataLine = line.split( csvSplitBy );
+
+				if ( dataLine.length != 1 + featureList.size() )
+				{
+					IJ.log( "Cannot read CSV, number of rows (" + (dataLine.length - 1) + ") is not compatible with loaded JSON (" + featureList.size() + ")." );
+					throw new RuntimeException( "Cannot read CSV, number of rows (" + (dataLine.length - 1) + ") is not compatible with loaded JSON (" + featureList.size() + ")." );
+				}
+
+				if ( lineIndex == 0 )
+				{
+					// header, ignore
+				}
+				else
+				{
+					final int imageIndex = Integer.parseInt( dataLine[ 0 ] );
+					if ( imageIndex != lineIndex - 1 )
+					{
+						IJ.log( "Image index (" + imageIndex + ") does not match line index (" + (lineIndex - 1) + "). Stopping." );
+						throw new RuntimeException( "Image index (" + imageIndex + ") does not match line index (" + (lineIndex - 1) + "). Stopping." );
+					}
+
+					final ArrayList<FeatureState> data = featuresState.get( imageIndex );
+
+					for ( int j = 0; j < featureList.size(); ++j )
+						data.set( j, FeatureState.values()[ Integer.parseInt( dataLine[ j + 1 ] ) + 1 ] ); // +1 because 0 is represented as -1 in the file
+				}
+		
+				++lineIndex;
+			}
+		}
+		catch (IOException e)
+		{
+			IJ.log( "Failed to load '" + file.getAbsolutePath() + "': " + e );
+			e.printStackTrace();
+			return false;
+		}
+
+		IJ.log( "Loaded '" + file.getAbsolutePath() + "'." );
+
+		return true;
 	}
 
 	// just for loading ...
