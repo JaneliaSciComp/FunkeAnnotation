@@ -650,6 +650,8 @@ public class MLTool implements Command, PlugIn
 		setup( defaultDirectory = gd.getNextString() );
 		SwingUtilities.invokeLater(() ->
 			this.showDialog( 100, 3.0, 50, Color.orange, defaultLoadExisting = gd.getNextBoolean(), defaultJSON = gd.getNextString() ) );
+
+		SwingUtilities.invokeLater(() -> IJ.log( "\nNote: keyboard-shortcuts are 'a', 's', 'd' for features -1, 0, +1; '>', '<' for next/prev feature, and 'X' for marking the current image as invalid."));
 	}
 
 	@Override
