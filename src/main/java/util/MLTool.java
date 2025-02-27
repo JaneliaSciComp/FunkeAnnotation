@@ -6,9 +6,7 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Toolkit;
-import java.awt.event.AWTEventListener;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -31,7 +29,6 @@ import javax.swing.JSlider;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 
 import org.scijava.command.Command;
 import org.scijava.plugin.Plugin;
@@ -57,10 +54,10 @@ import util.GUIStatePhase2.FeatureState;
 @Plugin(type = Command.class, menuPath = "Plugins>Funke lab>Annotator ...")
 public class MLTool implements Command, PlugIn
 {
-	// TODO: jump to next annotated features
 	// TODO: when click save, also save current image/feature location
 	// TODO: autosave when going to next/last image using next/prev feature button
 	// TODO: overview of work progress (everything) > save as TIFF
+	// TODO: state of current image annotation
 
 	final ForkJoinPool myPool = new ForkJoinPool( Runtime.getRuntime().availableProcessors() );
 
@@ -77,8 +74,6 @@ public class MLTool implements Command, PlugIn
 	SliceObserver sliceObserver;
 	String dir;
 	ByteProcessor[] imgsA, imgsB, imgsM;
-
-	//ColorProcessor overview;
 
 	public void setup( final String dir )
 	{
@@ -222,12 +217,13 @@ public class MLTool implements Command, PlugIn
 			final int defaultMask,
 			final Color defaultColor,
 			final boolean loadExisting,
+			final boolean globalProgress,
 			final String json )
 	{
 		setColor( defaultColor );
 
 		final boolean phase1 = (json == null || json.trim().length() == 0);
-		final GUIState state = ( phase1 ? new GUIStatePhase1( this ) : new GUIStatePhase2( this ) );
+		final GUIState state = ( phase1 ? new GUIStatePhase1( this ) : new GUIStatePhase2( this, globalProgress ) );
 
 		// create dialog
 		state.dialog = new JDialog( (JFrame)null, state.labelDialog + "0", false);
@@ -652,14 +648,24 @@ public class MLTool implements Command, PlugIn
 		gd.addDirectoryField("Directory", defaultDirectory, 80 );
 		gd.addFileField( "Annotation JSON", defaultJSON, 80 );
 		gd.addCheckbox( "Load existing state (notes/selections)", defaultLoadExisting);
+		gd.addCheckbox( "Show global progress (only when JSON is provided)", GUIStatePhase2.showGlobalProgress );
+
+		defaultDirectory = gd.getNextString();
+		defaultJSON = gd.getNextString();
+		defaultLoadExisting = gd.getNextBoolean();
+		GUIStatePhase2.showGlobalProgress = gd.getNextBoolean();
 
 		gd.showDialog();
 		if ( gd.wasCanceled() )
 			return;
 
-		setup( defaultDirectory = gd.getNextString() );
+		setup( defaultDirectory );
 		SwingUtilities.invokeLater(() ->
-			this.showDialog( 100, 3.0, 50, Color.orange, defaultLoadExisting = gd.getNextBoolean(), defaultJSON = gd.getNextString() ) );
+			this.showDialog(
+					100, 3.0, 50, Color.orange,
+					defaultLoadExisting,
+					GUIStatePhase2.showGlobalProgress,
+					defaultJSON ) );
 
 		SwingUtilities.invokeLater(() -> IJ.log( "\nNote: keyboard-shortcuts are 'a', 's', 'd' for features -1, 0, +1; '>', '<' for next/prev feature, and 'X' for marking the current image as invalid."));
 	}

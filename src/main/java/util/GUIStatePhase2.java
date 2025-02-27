@@ -23,11 +23,16 @@ import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonReader;
 
 import ij.IJ;
+import ij.ImagePlus;
+import ij.process.ColorProcessor;
+import net.imglib2.type.numeric.ARGBType;
 
 public class GUIStatePhase2 extends GUIState
 {
 	// the state of the GUI when rating images
 	public enum FeatureState { NEGATIVE, ZERO, POSITIVE, NOT_ASSIGNED, INVALID }
+
+	public static boolean showGlobalProgress = true;
 
 	static Color incompleteFeatureSet = new Color( 255, 128, 128 );
 	static Color completeFeatureSet = new Color( 128, 255, 128 );
@@ -40,15 +45,19 @@ public class GUIStatePhase2 extends GUIState
 	public int numImages, numFeatures;
 	public final ArrayList< ArrayList< FeatureState > > featuresState = new ArrayList<>();
 
+	public ImagePlus overview;
+
 	JLabel featureLabel, featureDescMinusOne, featureDescZero, featureDescPlusOne;
 	JLabel placeholder1, placeholder2, barMinus1, barZero, barPlus1;
 	JButton buttonMinus1, buttonZero, buttonPlus1, buttonPrevFeature, buttonNextFeature, buttonNextImage;
 
+	final boolean globalProgress;
 	int currentFeature = 0;
 
-	public GUIStatePhase2( final MLTool tool )
+	public GUIStatePhase2( final MLTool tool, final boolean globalProgress )
 	{
 		super( tool );
+		this.globalProgress = globalProgress;
 	}
 
 	public boolean setup( final int numImages, final String json )
@@ -76,6 +85,14 @@ public class GUIStatePhase2 extends GUIState
 			this.featuresState.add( states );
 		}
 
+		if ( globalProgress )
+		{
+			final ColorProcessor overviewP = new ColorProcessor( numImages, numFeatures );
+			overview = new ImagePlus( "Global Annotation Progress", overviewP );
+			reDrawGlobalProgress();
+			overview.show();
+		}
+
 		return true;
 	}
 
@@ -83,6 +100,57 @@ public class GUIStatePhase2 extends GUIState
 	public void notifyImageChanged()
 	{
 		updateFeature();
+	}
+
+	public void reDrawGlobalProgress()
+	{
+		if ( !globalProgress )
+			return;
+
+		int index = 0;
+		final ColorProcessor cp = (ColorProcessor)overview.getProcessor();
+
+		for ( int y = 0; y < numFeatures; ++y )
+			for ( int x = 0; x < numImages; ++x )
+				cp.set(index++, getColor( featuresState.get( x ).get( y ) ));
+	}
+
+	public static int getColor( final FeatureState myState )
+	{
+		final int r,g,b;
+
+		if ( myState == FeatureState.INVALID )
+		{
+			r = invalidFeatureSet.getRed();
+			g = invalidFeatureSet.getGreen();
+			b = invalidFeatureSet.getBlue();
+		}
+		else if ( myState == FeatureState.NOT_ASSIGNED )
+		{
+			r = incompleteFeatureSet.getRed();
+			g = incompleteFeatureSet.getGreen();
+			b = incompleteFeatureSet.getBlue();
+		}
+		else
+		{
+			r = completeFeatureSet.getRed();
+			g = completeFeatureSet.getGreen();
+			b = completeFeatureSet.getBlue();
+		}
+
+		return ARGBType.rgba(r, g, b, 0);
+	}
+
+	public void updateGlobalProgress()
+	{
+		if ( !globalProgress )
+			return;
+
+		final ColorProcessor cp = (ColorProcessor)overview.getProcessor();
+
+		cp.set( currentImage(), currentFeature, getColor( featureState() ) );
+
+		overview.updateAndDraw();
 	}
 
 	public boolean nextImageWithFeature( final FeatureState state )
@@ -285,6 +353,8 @@ public class GUIStatePhase2 extends GUIState
 		barZero.setBackground( state == FeatureState.ZERO ? Color.magenta : Color.lightGray );
 		barPlus1.setBackground( state == FeatureState.POSITIVE ? Color.magenta : Color.lightGray );
 
+		updateGlobalProgress();
+
 		testAndUpdateFeatureComplete();
 	}
 
@@ -295,6 +365,8 @@ public class GUIStatePhase2 extends GUIState
 
 		currentFeature = 0;
 		nextImage();
+
+		reDrawGlobalProgress();
 	}
 
 	public void setFeatureState( final FeatureState state )
@@ -441,6 +513,8 @@ public class GUIStatePhase2 extends GUIState
 		}
 
 		IJ.log( "Loaded '" + file.getAbsolutePath() + "'." );
+
+		reDrawGlobalProgress();
 
 		return true;
 	}
