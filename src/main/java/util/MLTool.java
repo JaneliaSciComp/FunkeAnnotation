@@ -55,7 +55,6 @@ import util.GUIStatePhase2.FeatureState;
 public class MLTool implements Command, PlugIn
 {
 	// TODO: when click save, also save current image/feature location
-	// TODO: autosave when going to next/last image using next/prev feature button
 	// TODO: state of current image annotation
 
 	final ForkJoinPool myPool = new ForkJoinPool( Runtime.getRuntime().availableProcessors() );
@@ -570,7 +569,6 @@ public class MLTool implements Command, PlugIn
 		state.dialog.pack();
 		state.dialog.setVisible(true);
 
-
 		// setup ImageJ window
 		this.main = new HashMap<>();
 		this.stack = new ImageStack();
@@ -631,6 +629,9 @@ public class MLTool implements Command, PlugIn
 			// start animation
 			new Animator().run( "start" );
 		}).start();
+
+		if ( !phase1 )
+			((GUIStatePhase2)state).loadAndApplyState( dir );
 
 		state.dialog.requestFocus();
 	}

@@ -39,6 +39,7 @@ public class GUIStatePhase2 extends GUIState
 	static Color completeFeatureSet = new Color( 128, 255, 128 );
 	static Color invalidFeatureSet = new Color( 128, 128, 128 );
 
+	static String state = "annotation_state.txt";
 	static String csv = "results.csv";
 	static String csvSplitBy = ",";
 
@@ -460,6 +461,15 @@ public class GUIStatePhase2 extends GUIState
 
 		IJ.log( "Saved '" + fn + "'. [took " + (System.currentTimeMillis() - time ) + " ms]");
 
+		try ( final FileWriter writerState = new FileWriter( new File( dir, state ).getAbsolutePath() ))
+		{
+			writerState.append( Integer.toString( currentImage() ) );
+			writerState.append( "\n" );
+			writerState.append( Integer.toString( currentFeature ) );
+			writerState.append( "\n" );
+		}
+		catch (IOException e) {}
+
 		return true;
 	}
 
@@ -526,6 +536,19 @@ public class GUIStatePhase2 extends GUIState
 		reDrawGlobalProgress();
 
 		return true;
+	}
+
+	public void loadAndApplyState( final String dir )
+	{
+		try ( final BufferedReader br = new BufferedReader(new FileReader(new File( dir, state ))))
+		{
+			final String line1 = br.readLine();
+			final String line2 = br.readLine();
+
+			currentFeature = Integer.parseInt( line2 );
+			sliderImg.setValue( Integer.parseInt( line1 ) );
+		}
+		catch (Exception e) {}
 	}
 
 	// just for loading ...
