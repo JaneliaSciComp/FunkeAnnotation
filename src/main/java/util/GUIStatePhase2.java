@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -86,9 +87,22 @@ public class GUIStatePhase2 extends GUIState
 
 	public boolean nextImageWithFeature( final FeatureState state )
 	{
+		return nextImageWithFeature( Collections.singletonList( state ) );
+	}
+
+	public boolean nextImageWithFeature( final List< FeatureState > states )
+	{
 		for ( int i = currentImage() + 1; i < numImages; ++i )
 			for ( int f = 0; f < numFeatures; ++f )
-				if ( featuresState.get( i ).get( f ) == state )
+			{
+				final FeatureState myState = featuresState.get( i ).get( f );
+
+				boolean present = false;
+
+				for ( final FeatureState s : states )
+					present |= ( s == myState );
+
+				if ( present )
 				{
 					// found it
 					currentFeature = 0;
@@ -96,15 +110,29 @@ public class GUIStatePhase2 extends GUIState
 
 					return true;
 				}
+			}
 
 		return false;
 	}
 
 	public boolean prevImageWithFeature( final FeatureState state )
 	{
+		return prevImageWithFeature( Collections.singletonList( state ) );
+	}
+
+	public boolean prevImageWithFeature( final List< FeatureState > states )
+	{
 		for ( int i = currentImage() - 1; i >= 0; --i )
 			for ( int f = numFeatures - 1; f >= 0; --f )
-				if ( featuresState.get( i ).get( f ) == state )
+			{
+				final FeatureState myState = featuresState.get( i ).get( f );
+
+				boolean present = false;
+
+				for ( final FeatureState s : states )
+					present |= ( s == myState );
+
+				if ( present )
 				{
 					// found it
 					currentFeature = 0;
@@ -112,11 +140,17 @@ public class GUIStatePhase2 extends GUIState
 
 					return true;
 				}
+			}
 
 		return false;
 	}
 
-	public boolean nextUnannotatedFeature()
+	public boolean nextFeature( final FeatureState state )
+	{
+		return nextFeature( Collections.singletonList( state ) );
+	}
+
+	public boolean nextFeature( final List< FeatureState > states )
 	{
 		//System.out.println();
 		int startFeature = currentFeature + 1;
@@ -127,8 +161,14 @@ public class GUIStatePhase2 extends GUIState
 			for ( int f = startFeature; f < numFeatures; ++f )
 			{
 				//System.out.println( i+","+f+": " + featuresState.get( i ).get( f ) );
+				final FeatureState myState = featuresState.get( i ).get( f );
 
-				if ( featuresState.get( i ).get( f ) == FeatureState.NOT_ASSIGNED )
+				boolean present = false;
+
+				for ( final FeatureState s : states )
+					present |= ( s == myState );
+
+				if ( present )
 				{
 					// found it
 					currentFeature = f;
@@ -148,7 +188,12 @@ public class GUIStatePhase2 extends GUIState
 		return false;
 	}
 
-	public boolean prevUnannotatedFeature()
+	public boolean prevFeature( final FeatureState state )
+	{
+		return prevFeature( Collections.singletonList( state ) );
+	}
+
+	public boolean prevFeature( final List< FeatureState > states )
 	{
 		int startFeature = currentFeature - 1;
 
@@ -157,7 +202,14 @@ public class GUIStatePhase2 extends GUIState
 			// only on the current image start one feature down from the current one, then start at the highest
 			for ( int f = startFeature; f >= 0; --f )
 			{
-				if ( featuresState.get( i ).get( f ) == FeatureState.NOT_ASSIGNED )
+				final FeatureState myState = featuresState.get( i ).get( f );
+
+				boolean present = false;
+
+				for ( final FeatureState s : states )
+					present |= ( s == myState );
+
+				if ( present )
 				{
 					// found it
 					currentFeature = f;

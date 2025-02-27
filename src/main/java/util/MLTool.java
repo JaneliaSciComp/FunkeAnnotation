@@ -57,14 +57,10 @@ import util.GUIStatePhase2.FeatureState;
 @Plugin(type = Command.class, menuPath = "Plugins>Funke lab>Annotator ...")
 public class MLTool implements Command, PlugIn
 {
-	// Done: default Mask: 0.5, red
-	// Done: on start ask for root directory
-	// Done: zoom to 300%
-	// Done: play button (with FPS) > turn into 4D image
-	// Done: support images: 
-	// directory a,b,m: increasing ID, no leading zeros
-	// Done: save in the parent directory
-	// Done: first iteration a single text file
+	// TODO: jump to next annotated features
+	// TODO: when click save, also save current image/feature location
+	// TODO: autosave when going to next/last image using next/prev feature button
+	// TODO: overview of work progress (everything) > save as TIFF
 
 	final ForkJoinPool myPool = new ForkJoinPool( Runtime.getRuntime().availableProcessors() );
 
@@ -81,6 +77,8 @@ public class MLTool implements Command, PlugIn
 	SliceObserver sliceObserver;
 	String dir;
 	ByteProcessor[] imgsA, imgsB, imgsM;
+
+	//ColorProcessor overview;
 
 	public void setup( final String dir )
 	{
@@ -377,19 +375,25 @@ public class MLTool implements Command, PlugIn
 			final JPopupMenu popupMenu3 = new JPopupMenu();
 			final JMenuItem item3 = new JMenuItem( "Next image without annotations" );
 			final JMenuItem item4 = new JMenuItem( "Next image marked as invalid" );
+			final JMenuItem item7 = new JMenuItem( "Next image with annotations" );
 			item3.addActionListener( e -> state2.nextImageWithFeature( FeatureState.NOT_ASSIGNED ) );
 			item4.addActionListener( e -> state2.nextImageWithFeature( FeatureState.INVALID ) );
+			item7.addActionListener( e -> state2.nextImageWithFeature( Arrays.asList( FeatureState.NEGATIVE, FeatureState.ZERO, FeatureState.POSITIVE ) ) );
 			popupMenu3.add( item3 );
 			popupMenu3.add( item4 );
+			popupMenu3.add( item7 );
 			state2.forward.setComponentPopupMenu( popupMenu3 );
 
 			final JPopupMenu popupMenu4 = new JPopupMenu();
 			final JMenuItem item5 = new JMenuItem( "Previous image without annotations" );
 			final JMenuItem item6 = new JMenuItem( "Previous image marked as invalid" );
+			final JMenuItem item8 = new JMenuItem( "Previous image with annotations" );
 			item5.addActionListener( e -> state2.prevImageWithFeature( FeatureState.NOT_ASSIGNED ) );
 			item6.addActionListener( e -> state2.prevImageWithFeature( FeatureState.INVALID ) );
+			item8.addActionListener( e -> state2.prevImageWithFeature( Arrays.asList( FeatureState.NEGATIVE, FeatureState.ZERO, FeatureState.POSITIVE ) ) );
 			popupMenu4.add( item5 );
 			popupMenu4.add( item6 );
+			popupMenu4.add( item8 );
 			state2.back.setComponentPopupMenu( popupMenu4 );
 
 			// GRID Y=3
@@ -479,9 +483,12 @@ public class MLTool implements Command, PlugIn
 			state2.buttonPrevFeature.setForeground( Color.GREEN.darker().darker().darker() );
 			state2.buttonPrevFeature.addActionListener( e -> state2.prevFeature() );
 			final JPopupMenu popupMenu1 = new JPopupMenu();
-			final JMenuItem item1 = new JMenuItem( "Previous un-annotated feature" );
-			popupMenu1.add( item1 );
-			item1.addActionListener( e -> state2.prevUnannotatedFeature() );
+			final JMenuItem item1a = new JMenuItem( "Previous un-annotated feature" );
+			popupMenu1.add( item1a );
+			item1a.addActionListener( e -> state2.prevFeature( FeatureState.NOT_ASSIGNED ) );
+			final JMenuItem item1b = new JMenuItem( "Previous annotated feature" );
+			popupMenu1.add( item1b );
+			item1b.addActionListener( e -> state2.prevFeature( Arrays.asList( FeatureState.NEGATIVE, FeatureState.ZERO, FeatureState.POSITIVE ) ) );
 			state2.buttonPrevFeature.setComponentPopupMenu( popupMenu1 );
 			state2.dialog.add( state2.buttonPrevFeature, c );
 
@@ -493,9 +500,12 @@ public class MLTool implements Command, PlugIn
 			state2.buttonNextFeature.setForeground( Color.GREEN.darker().darker().darker() );
 			state2.buttonNextFeature.addActionListener( e -> state2.nextFeature() );
 			final JPopupMenu popupMenu2 = new JPopupMenu();
-			final JMenuItem item2 = new JMenuItem( "Next un-annotated feature" );
-			item2.addActionListener( e -> state2.nextUnannotatedFeature() );
-			popupMenu2.add( item2 );
+			final JMenuItem item2a = new JMenuItem( "Next un-annotated feature" );
+			item2a.addActionListener( e -> state2.nextFeature( FeatureState.NOT_ASSIGNED ) );
+			popupMenu2.add( item2a );
+			final JMenuItem item2b = new JMenuItem( "Next annotated feature" );
+			item2b.addActionListener( e -> state2.nextFeature( Arrays.asList( FeatureState.NEGATIVE, FeatureState.ZERO, FeatureState.POSITIVE ) ) );
+			popupMenu2.add( item2b );
 			state2.buttonNextFeature.setComponentPopupMenu( popupMenu2 );
 			state2.dialog.add( state2.buttonNextFeature, c );
 
@@ -551,9 +561,9 @@ public class MLTool implements Command, PlugIn
 						state2.setFeatureState( FeatureState.ZERO );
 					else if ( ke.getKeyChar() == 'd' )
 						state2.setFeatureState( FeatureState.POSITIVE );
-					else if ( ke.getKeyChar() == '>' )
+					else if ( ke.getKeyChar() == '>' || ke.getKeyChar() == '.' )
 						state2.nextFeature();
-					else if ( ke.getKeyChar() == '<' )
+					else if ( ke.getKeyChar() == '<' || ke.getKeyChar() == ',' )
 						state2.prevFeature();
 					else if ( ke.getKeyChar() == 'X' )
 						state2.setAllFeatureStatesInvalid();
