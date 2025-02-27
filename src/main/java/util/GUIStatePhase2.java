@@ -14,6 +14,7 @@ import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 
 import org.janelia.saalfeldlab.n5.GsonUtils;
 
@@ -297,7 +298,7 @@ public class GUIStatePhase2 extends GUIState
 		return false;
 	}
 
-	public void nextFeature()
+	public void nextFeature( final boolean autosave )
 	{
 		if ( currentFeature < numFeatures - 1 )
 		{
@@ -310,11 +311,14 @@ public class GUIStatePhase2 extends GUIState
 			{
 				currentFeature = 0;
 				nextImage();
+
+				if ( autosave )
+					SwingUtilities.invokeLater( () -> save( tool.dir ) );
 			}
 		}
 	}
 
-	public void prevFeature()
+	public void prevFeature( final boolean autosave )
 	{
 		if ( currentFeature > 0 )
 		{
@@ -327,6 +331,9 @@ public class GUIStatePhase2 extends GUIState
 			{
 				currentFeature = numFeatures - 1;
 				prevImage();
+
+				if ( autosave )
+					SwingUtilities.invokeLater( () -> save( tool.dir ) );
 			}
 		}
 	}
@@ -408,8 +415,10 @@ public class GUIStatePhase2 extends GUIState
 	public String featureDescPlus1() { return "+: " + featureList.get( currentFeature ).plusOne; }
 
 	@Override
-	public boolean save( final String dir )
+	public synchronized boolean save( final String dir )
 	{
+		final long time = System.currentTimeMillis();
+
 		final String fn = new File( dir, csv ).getAbsolutePath();
 
 		IJ.log( "Saving '" + fn + "' ... " );
@@ -449,7 +458,7 @@ public class GUIStatePhase2 extends GUIState
 			return false;
 		}
 
-		IJ.log( "Saved '" + fn + "'." );
+		IJ.log( "Saved '" + fn + "'. [took " + (System.currentTimeMillis() - time ) + " ms]");
 
 		return true;
 	}

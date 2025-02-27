@@ -56,7 +56,6 @@ public class MLTool implements Command, PlugIn
 {
 	// TODO: when click save, also save current image/feature location
 	// TODO: autosave when going to next/last image using next/prev feature button
-	// TODO: overview of work progress (everything) > save as TIFF
 	// TODO: state of current image annotation
 
 	final ForkJoinPool myPool = new ForkJoinPool( Runtime.getRuntime().availableProcessors() );
@@ -477,7 +476,7 @@ public class MLTool implements Command, PlugIn
 			state2.buttonPrevFeature = new JButton( " -F " );;
 			state2.buttonPrevFeature.setFont( state2.buttonMinus1.getFont().deriveFont( Font.BOLD ) );
 			state2.buttonPrevFeature.setForeground( Color.GREEN.darker().darker().darker() );
-			state2.buttonPrevFeature.addActionListener( e -> state2.prevFeature() );
+			state2.buttonPrevFeature.addActionListener( e -> state2.prevFeature( true ) );
 			final JPopupMenu popupMenu1 = new JPopupMenu();
 			final JMenuItem item1a = new JMenuItem( "Previous un-annotated feature" );
 			popupMenu1.add( item1a );
@@ -494,7 +493,7 @@ public class MLTool implements Command, PlugIn
 			state2.buttonNextFeature = new JButton( " +F " );;
 			state2.buttonNextFeature.setFont( state2.buttonMinus1.getFont().deriveFont( Font.BOLD ) );
 			state2.buttonNextFeature.setForeground( Color.GREEN.darker().darker().darker() );
-			state2.buttonNextFeature.addActionListener( e -> state2.nextFeature() );
+			state2.buttonNextFeature.addActionListener( e -> state2.nextFeature( true ) );
 			final JPopupMenu popupMenu2 = new JPopupMenu();
 			final JMenuItem item2a = new JMenuItem( "Next un-annotated feature" );
 			item2a.addActionListener( e -> state2.nextFeature( FeatureState.NOT_ASSIGNED ) );
@@ -558,9 +557,9 @@ public class MLTool implements Command, PlugIn
 					else if ( ke.getKeyChar() == 'd' )
 						state2.setFeatureState( FeatureState.POSITIVE );
 					else if ( ke.getKeyChar() == '>' || ke.getKeyChar() == '.' )
-						state2.nextFeature();
+						state2.nextFeature( true );
 					else if ( ke.getKeyChar() == '<' || ke.getKeyChar() == ',' )
-						state2.prevFeature();
+						state2.prevFeature( true );
 					else if ( ke.getKeyChar() == 'X' )
 						state2.setAllFeatureStatesInvalid();
 				}
