@@ -95,6 +95,12 @@
 	</repositories>
 
 	<dependencies>
+		<dependency>
+			<groupId>org.janelia.saalfeldlab</groupId>
+			<artifactId>n5-universe</artifactId>
+			<!-- <version>1.4.1</version> -->
+		</dependency>
+
 		<!-- Fiji dependencies -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
