@@ -563,6 +563,8 @@ public class MLTool implements Command, PlugIn
 						state2.setAllFeatureStatesInvalid();
 				}
 			}, eventMask);
+
+			new Phase2Progress( state2 );
 		}
 
 		// show dialog

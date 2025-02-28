@@ -33,7 +33,7 @@ public class GUIStatePhase2 extends GUIState
 	// the state of the GUI when rating images
 	public enum FeatureState { NEGATIVE, ZERO, POSITIVE, NOT_ASSIGNED, INVALID }
 
-	public static boolean showGlobalProgress = true;
+	public static boolean showGlobalProgress = false;
 
 	static Color incompleteFeatureSet = new Color( 255, 128, 128 );
 	static Color completeFeatureSet = new Color( 128, 255, 128 );
@@ -55,11 +55,17 @@ public class GUIStatePhase2 extends GUIState
 
 	final boolean globalProgress;
 	int currentFeature = 0;
+	private Phase2Progress progress = null;
 
 	public GUIStatePhase2( final MLTool tool, final boolean globalProgress )
 	{
 		super( tool );
 		this.globalProgress = globalProgress;
+	}
+
+	public void register( final Phase2Progress progress )
+	{
+		this.progress = progress;
 	}
 
 	public boolean setup( final int numImages, final String json )
@@ -351,11 +357,8 @@ public class GUIStatePhase2 extends GUIState
 
 	public void updateFeatureState()
 	{
+		// fetches state given the current image and feature
 		final FeatureState state = featureState();
-
-		//System.out.println( "current image: " + currentImage() + " state=" + state);
-		//System.out.println( "feature index: " + currentFeature);
-		//System.out.println( "feature state: " + state);
 
 		barMinus1.setBackground( state == FeatureState.NEGATIVE ? Color.magenta : Color.lightGray );
 		barZero.setBackground( state == FeatureState.ZERO ? Color.magenta : Color.lightGray );
@@ -364,6 +367,9 @@ public class GUIStatePhase2 extends GUIState
 		updateGlobalProgress();
 
 		testAndUpdateFeatureComplete();
+
+		if ( progress != null )
+			progress.update();
 	}
 
 	public void setAllFeatureStatesInvalid()
