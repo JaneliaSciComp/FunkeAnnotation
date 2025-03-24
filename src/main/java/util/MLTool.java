@@ -73,13 +73,49 @@ public class MLTool implements Command, PlugIn
 	String dir;
 	ByteProcessor[] imgsA, imgsB, imgsM;
 
-	public void setup( final String dir )
+	public boolean setup( final String dir )
 	{
 		this.dir = dir;
 
 		final File dirA = new File( dir, "A" );
 		final File dirB = new File( dir, "B" );
 		final File dirM = new File( dir, "M" );
+
+		if (!dirA.exists() )
+		{
+			IJ.log( "Directory '" + dirA.getAbsolutePath() + "' does not exist. Stopping");
+			return false;
+		}
+
+		if (!dirB.exists() )
+		{
+			IJ.log( "Directory '" + dirB.getAbsolutePath() + "' does not exist. Stopping");
+			return false;
+		}
+
+		if (!dirM.exists() )
+		{
+			IJ.log( "Directory '" + dirM.getAbsolutePath() + "' does not exist. Stopping");
+			return false;
+		}
+
+		if ( dirA.list( (d,n) -> n.toLowerCase().endsWith( ".png" )).length == 0 )
+		{
+			IJ.log( "Directory '" + dirA.getAbsolutePath() + "'does not contain PNG's. Stopping");
+			return false;
+		}
+
+		if ( dirB.list( (d,n) -> n.toLowerCase().endsWith( ".png" )).length == 0 )
+		{
+			IJ.log( "Directory '" + dirB.getAbsolutePath() + "'does not contain PNG's. Stopping");
+			return false;
+		}
+
+		if ( dirM.list( (d,n) -> n.toLowerCase().endsWith( ".png" )).length == 0 )
+		{
+			IJ.log( "Directory '" + dirM.getAbsolutePath() + "'does not contain PNG's. Stopping");
+			return false;
+		}
 
 		final List<String> filesA = Arrays.asList( dirA.list( (d,n) -> n.toLowerCase().endsWith( ".png" ) ) );
 		final List<String> filesB = Arrays.asList( dirB.list( (d,n) -> n.toLowerCase().endsWith( ".png" ) ) );
@@ -148,6 +184,8 @@ public class MLTool implements Command, PlugIn
 		IJ.log( "Done, took " + ( System.currentTimeMillis() - time ) + " ms." );
 
 		setImages( imgsA[ 0 ], imgsB[ 0 ], imgsM[ 0 ] );
+
+		return true;
 	}
 
 	public void setImages( final ByteProcessor ip1, final ByteProcessor ip2, final ByteProcessor mask )
@@ -661,7 +699,9 @@ public class MLTool implements Command, PlugIn
 		if ( gd.wasCanceled() )
 			return;
 
-		setup( defaultDirectory );
+		if ( !setup( defaultDirectory ) )
+			return;
+
 		SwingUtilities.invokeLater(() ->
 			this.showDialog(
 					100, 3.0, 50, Color.orange,
@@ -680,8 +720,8 @@ public class MLTool implements Command, PlugIn
 		//try { UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName()); } catch (Exception e) { }
 
 		new ImageJ();
-		defaultDirectory = "/Users/preibischs/Documents/Janelia/Projects/Funke/phase1/";
-		defaultJSON = "/Users/preibischs/Documents/Janelia/Projects/Funke/phase2_example.json";
+		defaultDirectory = "/Volumes/funke/adjavond/annotation_synapses/phase1_42";///Users/preibischs/Documents/Janelia/Projects/Funke/phase1/";
+		defaultJSON = "/Volumes/funke/adjavond/annotation_synapses/phase2_example.json";//"/Users/preibischs/Documents/Janelia/Projects/Funke/phase2_example.json";
 
 		new MLTool().run( null );
 
