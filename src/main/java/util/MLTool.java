@@ -690,24 +690,29 @@ public class MLTool implements Command, PlugIn
 		gd.addCheckbox( "Load existing state (notes/selections)", defaultLoadExisting);
 		gd.addCheckbox( "Show global progress (only when JSON is provided)", GUIStatePhase2.showGlobalProgress );
 
-		defaultDirectory = gd.getNextString();
-		defaultJSON = gd.getNextString();
-		defaultLoadExisting = gd.getNextBoolean();
-		GUIStatePhase2.showGlobalProgress = gd.getNextBoolean();
-
 		gd.showDialog();
 		if ( gd.wasCanceled() )
 			return;
 
-		if ( !setup( defaultDirectory ) )
+		final String dir = defaultDirectory = gd.getNextString();
+		final String json = defaultJSON = gd.getNextString();
+		final boolean loadExisting = defaultLoadExisting = gd.getNextBoolean();
+		GUIStatePhase2.showGlobalProgress = gd.getNextBoolean();
+
+		IJ.log( "dir: " + dir );
+		IJ.log( "json: " + json );
+		IJ.log( "loadExisting: " + loadExisting );
+		IJ.log( "showGlobalProgress: " + GUIStatePhase2.showGlobalProgress );
+		
+		if ( !setup( dir ) )
 			return;
 
 		SwingUtilities.invokeLater(() ->
 			this.showDialog(
 					100, 3.0, 50, Color.orange,
-					defaultLoadExisting,
+					loadExisting,
 					GUIStatePhase2.showGlobalProgress,
-					defaultJSON ) );
+					json ) );
 
 		SwingUtilities.invokeLater(() -> IJ.log( "\nNote: keyboard-shortcuts are 'a', 's', 'd' for features -1, 0, +1; '>', '<' for next/prev feature, and 'X' for marking the current image as invalid."));
 	}
@@ -720,8 +725,8 @@ public class MLTool implements Command, PlugIn
 		//try { UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName()); } catch (Exception e) { }
 
 		new ImageJ();
-		defaultDirectory = "/Volumes/funke/adjavond/annotation_synapses/phase1_42";///Users/preibischs/Documents/Janelia/Projects/Funke/phase1/";
-		defaultJSON = "/Volumes/funke/adjavond/annotation_synapses/phase2_example.json";//"/Users/preibischs/Documents/Janelia/Projects/Funke/phase2_example.json";
+		defaultDirectory = "/Users/adjavond/Desktop/phase1_42";///Users/preibischs/Documents/Janelia/Projects/Funke/phase1/";
+		defaultJSON = "/Users/adjavond/Desktop/phase2_example.json";//"/Users/preibischs/Documents/Janelia/Projects/Funke/phase2_example.json";
 
 		new MLTool().run( null );
 
