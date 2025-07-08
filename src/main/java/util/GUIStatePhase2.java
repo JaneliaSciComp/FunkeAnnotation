@@ -504,8 +504,8 @@ public class GUIStatePhase2 extends GUIState
 
 				if ( dataLine.length != 1 + featureList.size() )
 				{
-					IJ.log( "Cannot read CSV, number of rows (" + (dataLine.length - 1) + ") is not compatible with loaded JSON (" + featureList.size() + ")." );
-					throw new RuntimeException( "Cannot read CSV, number of rows (" + (dataLine.length - 1) + ") is not compatible with loaded JSON (" + featureList.size() + ")." );
+					IJ.log( "Cannot read CSV, number of columns (" + (dataLine.length - 1) + ") is not compatible with loaded JSON (" + featureList.size() + ")." );
+					throw new RuntimeException( "Cannot read CSV, number of columns (" + (dataLine.length - 1) + ") is not compatible with loaded JSON (" + featureList.size() + ")." );
 				}
 
 				if ( lineIndex == 0 )
@@ -560,13 +560,16 @@ public class GUIStatePhase2 extends GUIState
 	// just for loading ...
 	public static class Feature
 	{
-		final String name;
-		String minusOne, zero, plusOne;
+	    final String name;
+	    String minusOne, zero, plusOne;
 
-		public Feature( String name )
-		{
-			this.name = name;
-		}
+	    public Feature(String name, String minusOne, String zero, String plusOne)
+	    {
+	        this.name = name;
+	        this.minusOne = minusOne;
+	        this.zero = zero;
+	        this.plusOne = plusOne;
+	    }
 	}
 
 	public static List< Feature > loadJSON( final String json )
@@ -576,33 +579,31 @@ public class GUIStatePhase2 extends GUIState
 			final Gson gson = new Gson();
 			final JsonReader reader = new JsonReader(new FileReader( json ));
 			final JsonElement element = gson.fromJson(reader, JsonElement.class );
+			
+	        // Create a list to store the features
+	        final List<Feature> featureList = new ArrayList<>();
 
-			final Map<String, Class<?>> sc = GsonUtils.listAttributes( element );
-			final JsonObject jo = element.getAsJsonObject();
+	        // Iterate through the element
+			element.getAsJsonArray().forEach(object -> {
+	            // Parse each feature object
+	            final JsonObject featureElement = object.getAsJsonObject();
+	            String name = featureElement.get("name").getAsString();
+	            String minusOne = featureElement.get("-1").getAsString();
+	            String zero = featureElement.get("0").getAsString();
+	            String plusOne = featureElement.get("1").getAsString();
 
-			final List< Feature > featureList = new ArrayList<>();
+	            // Create a Feature object and add it to the list
+	            Feature feature = new Feature(name, minusOne, zero, plusOne);
+	            featureList.add(feature);
+	            
+	            // Log the features
 
-			sc.forEach( (s,c) -> 
-			{
-				IJ.log( "\nFeature: " + s + " [class=" + c + "]");
-
-				final JsonObject featureElement = jo.getAsJsonObject( s );
-
-				final Feature feature = new Feature( s );
-
-				feature.minusOne = featureElement.get( "-1" ).getAsString();
-				feature.zero = featureElement.get( "0" ).getAsString();
-				feature.plusOne = featureElement.get( "1" ).getAsString();
-
-				featureList.add( feature );
-
+	            IJ.log("Feature: " + feature.name);
 				IJ.log( "-1: " + feature.minusOne );
 				IJ.log( "0: " + feature.zero );
 				IJ.log( "+1 :" + feature.plusOne );
 
-				//featureElement.entrySet().forEach( e -> System.out.println(e.getKey() + ": " + e.getValue().getAsString()));//forEach( (s1,e1) -> System.out.println( s1 ) );
-				//System.out.println();
-			} );
+	        } );
 
 			return featureList;
 		}
