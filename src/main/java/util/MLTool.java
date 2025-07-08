@@ -637,14 +637,24 @@ public class MLTool implements Command, PlugIn
 		this.mainImp.setOverlay( ov );
 
 		final Font font = new Font(" SansSerif", Font.PLAIN, 26);
+		int imgWidth = imgsA[0].getWidth();
+		int imgHeight = imgsA[0].getHeight();
 
-		final TextRoi textROIA = new TextRoi(135, 12, "A", font );
-		textROIA.setStrokeColor( new Color( 255, 255, 255 ) );
-		ov.add( textROIA );
+		// Offset from right edge (e.g. 10 pixels to the left from the right boundary)
+		int offsetX = 10;
+		// Offset from top/bottom edge
+		int offsetY = 10;
 
-		final TextRoi textROIB = new TextRoi(136, 85, "B", font );
-		textROIB.setStrokeColor( new Color( 255, 0, 0 ) );
-		ov.add( textROIB );
+		// Place "A" in the top-right corner
+		TextRoi textROIA = new TextRoi(imgWidth - offsetX - 20, offsetY, "A", font);
+		textROIA.setStrokeColor(new Color(255, 255, 255));
+		ov.add(textROIA);
+
+		// Place "B" in the bottom-right corner
+		TextRoi textROIB = new TextRoi(imgWidth - offsetX - 20, imgHeight - offsetY - 20, "B", font);
+		textROIB.setStrokeColor(new Color(255, 0, 0));
+		ov.add(textROIB);
+
 
 		SliceListener sliceListener = l ->
 		{
@@ -726,7 +736,7 @@ public class MLTool implements Command, PlugIn
 
 		new ImageJ();
 		defaultDirectory = "/Users/adjavond/Desktop/phase1_42";///Users/preibischs/Documents/Janelia/Projects/Funke/phase1/";
-		defaultJSON = "/Users/adjavond/Desktop/phase2_example.json";//"/Users/preibischs/Documents/Janelia/Projects/Funke/phase2_example.json";
+		defaultJSON = "/Users/adjavond/Desktop/features_list.json";//"/Users/preibischs/Documents/Janelia/Projects/Funke/phase2_example.json";
 
 		new MLTool().run( null );
 
